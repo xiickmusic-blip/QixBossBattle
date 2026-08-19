@@ -10,10 +10,11 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
-    minWidth: 960,
-    minHeight: 540,
     backgroundColor: '#05070b',
     autoHideMenuBar: true,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -52,6 +53,34 @@ ipcMain.handle('steam:leave-lobby', () => steam.leaveLobby());
 ipcMain.handle('steam:get-members', () => steam.getMembers());
 ipcMain.handle('steam:invite-lobby', () => steam.openInviteDialog());
 ipcMain.handle('steam:send', (_e, payload) => steam.send(payload));
+
+ipcMain.handle('window:set-display-mode', (_e, mode) => {
+  if (!mainWindow || mainWindow.isDestroyed()) return false;
+  const sizes = {
+    '960x540': [960, 540],
+    '1280x720': [1280, 720],
+    '1600x900': [1600, 900],
+    '1920x1080': [1920, 1080]
+  };
+  if (mode === 'fullscreen') {
+    mainWindow.setFullScreen(true);
+    mainWindow.setResizable(false);
+    return true;
+  }
+  const size = sizes[mode] || sizes['1280x720'];
+  mainWindow.setFullScreen(false);
+  mainWindow.setResizable(false);
+  mainWindow.setContentSize(size[0], size[1], false);
+  mainWindow.center();
+  return true;
+});
+
+ipcMain.handle('window:get-display-mode', () => {
+  if (!mainWindow || mainWindow.isDestroyed()) return '1280x720';
+  if (mainWindow.isFullScreen()) return 'fullscreen';
+  const [w, h] = mainWindow.getContentSize();
+  return `${w}x${h}`;
+});
 
 steam.onMessage = payload => {
   if (mainWindow && !mainWindow.isDestroyed()) {
