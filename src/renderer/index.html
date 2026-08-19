@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RAID QIX</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Arial,sans-serif}button,select,input{font:inherit}
+canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block;background:#000;image-rendering:pixelated}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10}.brand{position:absolute;left:20px;top:18px;font-weight:900;letter-spacing:5px;font-size:22px;text-shadow:0 2px 8px #000}.sub{font-size:10px;letter-spacing:3px;opacity:.55;margin-top:3px}.bossHud{position:absolute;left:50%;top:18px;transform:translateX(-50%);width:min(460px,55vw);text-align:center}.bossName{font-size:12px;letter-spacing:3px;margin-bottom:6px}.bar{height:11px;border:1px solid #4a5060;background:#11151e;box-shadow:0 0 18px rgba(255,255,255,.06)}.bar>div{height:100%;width:100%;background:#ff3d68;box-shadow:0 0 14px currentColor}.stats{position:absolute;right:20px;top:18px;text-align:right;font-size:12px;line-height:1.8;text-shadow:0 2px 8px #000}.loadoutHud{position:absolute;left:20px;bottom:18px;font-size:11px;line-height:1.6;opacity:.8;text-shadow:0 2px 8px #000}.skillReady{color:#69ff8d}.skillCooldown{color:#ffcf5c}
+.screen{position:fixed;inset:0;z-index:100;background:rgba(3,5,10,.96);display:none;align-items:center;justify-content:center}.screen.active{display:flex}.panel{width:min(980px,92vw);max-height:90vh;overflow:auto;border:1px solid #303644;background:linear-gradient(180deg,#0c111b,#090d14);padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.55)}.title{font-size:44px;font-weight:900;letter-spacing:9px}.eyebrow{font-size:10px;letter-spacing:5px;opacity:.45;margin-bottom:8px}.menuGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:30px}.btn,.card{border:1px solid #353b48;background:#121925;color:#fff;padding:18px;cursor:pointer;text-align:left;transition:.12s}.btn:hover,.card:hover{background:#1b2534;transform:translateY(-2px)}.btn strong,.card strong{display:block;font-size:18px;letter-spacing:2px}.btn small,.card small{display:block;margin-top:8px;opacity:.55}.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}.bossGrid,.itemGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.card.selected{outline:2px solid #69ff8d;box-shadow:0 0 18px rgba(105,255,141,.15)}.section{margin-top:26px}.section h3{font-size:12px;letter-spacing:3px}.muted{opacity:.5}.back{margin-top:24px}.member{padding:8px 0;border-bottom:1px solid #202631}.reward{font-size:28px;letter-spacing:4px;margin:18px 0}.chest{font-size:64px;text-shadow:0 0 28px rgba(255,255,255,.25)}.twoCol{display:grid;grid-template-columns:1fr 1fr;gap:24px}.setting{margin:14px 0}.setting label{display:block;font-size:11px;letter-spacing:2px;margin-bottom:6px}.setting input[type=range]{width:100%}@media(max-width:760px){.menuGrid,.bossGrid,.itemGrid,.twoCol{grid-template-columns:1fr}.title{font-size:32px}}
+
+.rarity-COMMON{border-color:#8e98a7!important;color:#d8dde5}.rarity-UNCOMMON{border-color:#4bdf7a!important;color:#7dff9f}.rarity-RARE{border-color:#4aa4ff!important;color:#7fc1ff}.rarity-EPIC{border-color:#c06cff!important;color:#d99cff}
+.inventoryItem{position:relative}.inventoryCount{position:absolute;right:9px;top:7px;font-size:10px;opacity:.7}.inventoryItem.selected{outline:2px solid #fff}
+
+.rarity-R1{border-color:#8e98a7!important;color:#d8dde5}.rarity-R2{border-color:#4bdf7a!important;color:#7dff9f}.rarity-R3{border-color:#4aa4ff!important;color:#7fc1ff}.rarity-R4{border-color:#c06cff!important;color:#d99cff}.rarity-R5{border-color:#ffbf46!important;color:#ffd977;box-shadow:0 0 14px rgba(255,191,70,.16)}
+.rewardCard{width:150px;min-height:130px;opacity:.22;transform:scale(.94);transition:.18s}.rewardCard.revealed{opacity:1;transform:scale(1)}.fusionSlot{min-height:88px;text-align:center}.fusionSlot.filled{outline:2px solid #fff}.inventoryItem[draggable=true]{cursor:grab}
+
+.titleDeck{width:min(1240px,94vw);height:min(760px,92vh);display:grid;grid-template-columns:420px 1fr;border:1px solid #28313d;background:#080d13;box-shadow:0 36px 90px rgba(0,0,0,.65);overflow:hidden}
+.titleRail{padding:38px 30px;background:#0d141b;position:relative;border-right:1px solid #26303b}
+.titleRail:before{content:"";position:absolute;inset:0;background:linear-gradient(155deg,transparent 0 42%,rgba(86,237,255,.045) 42% 58%,transparent 58%);pointer-events:none}
+.railLogo{font-size:48px;font-weight:900;letter-spacing:8px;margin-bottom:38px;position:relative}.railLogo small{display:block;font-size:9px;letter-spacing:5px;opacity:.4;margin-top:7px}
+.railButton{width:100%;position:relative;border:0;border-left:9px solid #127c88;background:#05080b;color:#fff;margin:0 0 14px;padding:19px 24px;text-align:left;cursor:pointer;clip-path:polygon(18px 0,100% 0,100% 100%,0 100%,0 18px);transition:.15s}
+.railButton strong{font-size:20px;letter-spacing:2px}.railButton small{display:block;opacity:.46;margin-top:5px}.railButton:hover,.railButton.active{transform:translateX(8px);background:#111d25}.railButton.active{border-left-color:#52eaff}
+.titleRight{padding:34px 38px;overflow:auto;background:radial-gradient(circle at 80% 15%,rgba(81,226,255,.08),transparent 34%),#080d13}
+.sessionHero{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #26303b;padding-bottom:22px}.sessionHero h2{font-size:32px;margin:0;letter-spacing:5px}.sessionCode{font-family:monospace;font-size:16px;letter-spacing:2px;color:#62efff}
+.sessionGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;margin-top:18px}.deckCard{border:1px solid #2a3541;background:#0c131b;padding:18px}.deckCard h3{margin:0 0 12px;font-size:11px;letter-spacing:3px;color:#8c9eae}
+.titleBossGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:230px;overflow:auto}.titleBossGrid .card{padding:11px}
+.trackInput{display:grid;grid-template-columns:1fr 76px auto;gap:7px}.trackInput input{min-width:0;padding:10px;background:#05080c;color:#fff;border:1px solid #34404c}.trackList{margin-top:10px;max-height:160px;overflow:auto}.trackRow{display:grid;grid-template-columns:30px 1fr 56px 28px;gap:7px;align-items:center;padding:8px 4px;border-bottom:1px solid #1d2730;font-size:11px}.trackUrl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.72}.trackDel{background:none;border:0;color:#ff7185;cursor:pointer}
+.nowPlaying{margin-top:10px;font-size:10px;letter-spacing:2px;color:#62efff;min-height:15px}.roomMember{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #1e2832;font-size:11px}
+.volumeValue{float:right;color:#62efff}
+@media(max-width:900px){.titleDeck{grid-template-columns:1fr;height:94vh}.titleRail{border-right:0;border-bottom:1px solid #26303b}.sessionGrid{grid-template-columns:1fr}.railLogo{font-size:34px}.titleRail{padding:24px}}
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud">
+  <div class="brand">RAID QIX<div class="sub" id="bossSubtitle">SELECT RAID</div></div>
+  <div class="bossHud"><div class="bossName" id="bossName">NO BOSS</div><div class="bar"><div id="bossHp"></div></div></div>
+  <div class="stats">AREA <span id="area">0</span>%<br>CORES <span id="relics">0</span>/<span id="coreTotal">8</span><br>DAMAGE <span id="damage">0</span><br>HP <span id="hp">3</span></div>
+  <div class="loadoutHud">SKILL <span id="skillHud">-</span><br>CHARM A <span id="charmAHud">-</span><br>CHARM B <span id="charmBHud">-</span></div>
+</div>
+
+<div id="titleScreen" class="screen active"><div class="titleDeck">
+  <aside class="titleRail">
+    <div class="railLogo">RAID<br>QIX<small>STEAM CO-OP / PSX RAID SYSTEM</small></div>
+    <button id="titleBossMode" class="railButton active"><strong>BOSS MODE</strong><small>固定ボスを選択してレイド</small></button>
+    <button id="titleRandomMode" class="railButton"><strong>RANDOM BOSS MODE</strong><small>死ぬまで階層を進む</small></button>
+    <button class="railButton" data-open="loadoutScreen"><strong>LOADOUT</strong><small>CHARM / SKILL / FUSION</small></button>
+    <button class="railButton" data-open="settingsScreen"><strong>SETTINGS</strong><small>AUDIO / CONTROL / VIDEO</small></button>
+  </aside>
+  <main class="titleRight">
+    <div class="sessionHero"><div><div class="eyebrow">RAID SESSION</div><h2 id="titleModeName">BOSS MODE</h2></div><div><div class="eyebrow">SESSION CODE</div><div id="titleLobbyCode" class="sessionCode">NO ROOM</div></div></div>
+    <div class="sessionGrid">
+      <div>
+        <section class="deckCard"><h3>ROOM / STEAM</h3>
+          <div class="row"><button id="titleCreateRoom" class="btn"><strong>CREATE ROOM</strong><small>Steam Friends-only</small></button><button id="titleInvite" class="btn"><strong>INVITE</strong><small>Steam Overlay</small></button><button id="titleCopyCode" class="btn"><strong>COPY CODE</strong></button></div>
+          <div class="row" style="margin-top:9px"><input id="titleJoinCode" placeholder="SESSION CODE / LOBBY ID" style="flex:1;padding:11px;background:#05080c;border:1px solid #34404c;color:#fff"><button id="titleJoinRoom" class="btn">JOIN</button></div>
+          <div id="titleMembers" style="margin-top:12px"><div class="muted">ROOM NOT CREATED</div></div>
+        </section>
+        <section id="titleBossSection" class="deckCard" style="margin-top:18px"><h3>BOSS SELECT</h3><div id="titleBossGrid" class="titleBossGrid"></div></section>
+        <button id="titleStartRaid" class="railButton" style="margin-top:18px;border-left-color:#ffe15a"><strong>START RAID</strong><small>HOST ONLY</small></button>
+      </div>
+      <div>
+        <section class="deckCard"><h3>BOSS TRACKLIST / SOUNDCLOUD</h3>
+          <div class="trackInput"><input id="scUrlInput" placeholder="SoundCloud track URL"><input id="scBpmInput" type="number" min="40" max="240" value="120" title="BPM"><button id="scAddTrack" class="btn">ADD</button></div>
+          <div class="muted" style="font-size:10px;margin-top:7px">BPMは任意。取得できない場合のビート演出に使用。</div>
+          <div id="scTrackList" class="trackList"></div>
+          <div id="scNowPlaying" class="nowPlaying">NO TRACK PLAYING</div>
+        </section>
+        <section class="deckCard" style="margin-top:18px"><h3>MODE INFO</h3><div id="titleModeInfo" style="font-size:13px;line-height:1.7">ボスを1体選択してレイド。1人でもルームを作成すれば開始できます。</div></section>
+      </div>
+    </div>
+  </main>
+</div></div>
+<div id="soloScreen" class="screen"><div class="panel"><div class="eyebrow">SOLO RAID</div><div class="title" style="font-size:30px">SELECT BOSS</div><div id="soloBossGrid" class="bossGrid"></div><button id="soloStart" class="btn back"><strong>START RAID</strong><small>全コアを破壊してボスを撃破</small></button><button class="btn back" data-open="titleScreen">BACK</button></div></div>
+<div id="loadoutScreen" class="screen"><div class="panel"><div class="eyebrow">PLAYER BUILD</div><div class="title" style="font-size:30px">LOADOUT / INVENTORY</div>
+<div class="section"><h3>SKILL / 1 SLOT</h3><div id="skillGrid" class="itemGrid"></div></div>
+<div class="section"><h3>EQUIPPED CHARMS / 2 SLOTS</h3><div id="charmGrid" class="itemGrid"></div></div>
+<div class="section"><h3>INVENTORY</h3><div class="twoCol"><div><div id="inventoryGrid" class="itemGrid" style="grid-template-columns:repeat(2,1fr)"></div></div><div id="itemDetail" class="card" style="cursor:default;min-height:220px"><strong>SELECT AN ITEM</strong><small>アイテムをクリックすると詳細を表示します。</small></div></div></div>
+<div class="section"><h3>CHARM FUSION / DRAG 5</h3>
+<div id="fusionSlots" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+  <div class="card fusionSlot" data-slot="0"><strong>DROP</strong><small>1</small></div>
+  <div class="card fusionSlot" data-slot="1"><strong>DROP</strong><small>2</small></div>
+  <div class="card fusionSlot" data-slot="2"><strong>DROP</strong><small>3</small></div>
+  <div class="card fusionSlot" data-slot="3"><strong>DROP</strong><small>4</small></div>
+  <div class="card fusionSlot" data-slot="4"><strong>DROP</strong><small>5</small></div>
+</div>
+<button id="fusionButton" class="btn" style="margin-top:12px;width:100%"><strong>FUSE 5 → NEXT RARITY</strong><small>同レアリティ5個を合成</small></button>
+<div id="fusionStatus" class="muted" style="margin-top:10px">5個ドラッグしてセットしてください</div></div>
+<div class="section muted" id="inventoryText"></div><button class="btn back" data-open="titleScreen">BACK</button></div></div>
+<div id="lobbyScreen" class="screen"><div class="panel"><div class="eyebrow">STEAM MATCHMAKING</div><div class="title" style="font-size:30px">LOBBY</div><div class="twoCol"><div><div class="section"><button id="createLobby" class="btn"><strong>CREATE LOBBY</strong><small>Friends-only / 最大4人</small></button></div><div class="section"><h3>JOIN BY LOBBY ID</h3><div class="row"><input id="lobbyIdInput" placeholder="Steam Lobby ID" style="flex:1;padding:14px;background:#070a10;border:1px solid #353b48;color:#fff"><button id="joinLobby" class="btn">JOIN</button></div></div><div class="section"><h3>BOSS</h3><div id="lobbyBossGrid" class="bossGrid"></div></div><button id="lobbyStart" class="btn back"><strong>HOST START</strong><small>選択ボスを全員へ同期</small></button></div><div><div class="section"><h3>STEAM STATUS</h3><div id="steamStatus" class="muted">checking...</div></div><div class="section"><h3>MEMBERS</h3><div id="members"></div></div><button id="leaveLobby" class="btn back">LEAVE LOBBY</button></div></div><button class="btn back" data-open="titleScreen">BACK</button></div></div>
+<div id="settingsScreen" class="screen"><div class="panel"><div class="eyebrow">SYSTEM</div><div class="title" style="font-size:30px">SETTINGS</div><div class="setting"><label>MASTER VOLUME <span id="volLabel">80</span>%</label><input id="volume" type="range" min="0" max="100" value="80"></div>
+<div class="setting"><label>BGM VOLUME <span id="bgmVolLabel" class="volumeValue">70</span>%</label><input id="bgmVolume" type="range" min="0" max="100" value="70"></div>
+<div class="setting"><label>SE VOLUME <span id="seVolLabel" class="volumeValue">80</span>%</label><input id="seVolume" type="range" min="0" max="100" value="80"></div><div class="setting"><label><input id="screenShake" type="checkbox" checked> SCREEN SHAKE</label></div><div class="setting"><label><input id="pixelMode" type="checkbox" checked> PSX PIXELIZE</label></div>
+<div class="setting">
+  <label>CONTROL MODE</label>
+  <select id="controlMode" style="width:100%;padding:12px;background:#070a10;border:1px solid #353b48;color:#fff">
+    <option value="keyboard">KEYBOARD / WASD</option>
+    <option value="click">MOUSE CLICK MOVE</option>
+    <option value="follow">CURSOR FOLLOW</option>
+  </select>
+  <div class="muted" style="margin-top:8px;font-size:11px;line-height:1.5">
+    CLICK MOVE: 左クリック地点へ移動 / 右クリックでスキル<br>
+    CURSOR FOLLOW: カーソルへ常時追従 / 右クリックでスキル
+  </div>
+</div><button class="btn back" data-open="titleScreen">BACK</button></div></div>
+<div id="rewardScreen" class="screen"><div class="panel" style="text-align:center">
+<div class="eyebrow">RAID REWARDS</div><div class="title" style="font-size:28px">OPEN CACHE</div>
+<div id="rewardProgress" class="muted" style="margin:10px 0 20px">0 / 0</div>
+<div id="rewardCards" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;min-height:170px"></div>
+<div id="rewardHoverDetail" class="card" style="margin:18px auto 0;max-width:520px;text-align:left;cursor:default"><strong>HOVER A REWARD</strong><small>カーソルを合わせると効果を確認できます。</small></div>
+<button id="rewardOpenNext" class="btn back" style="text-align:center"><strong>OPEN NEXT</strong><small>1個ずつ開封</small></button>
+<button id="rewardContinue" class="btn back" style="text-align:center;display:none"><strong>CLAIM & RETURN</strong></button>
+<div id="rewardName" style="display:none"></div><div id="rewardDesc" style="display:none"></div>
+</div></div>
+
+<iframe id="soundcloudWidget" allow="autoplay" style="position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-20px;bottom:-20px" src="about:blank"></iframe>
+<script src="https://w.soundcloud.com/player/api.js"></script>
+<script src="game-data.js"></script>
+<script src="game-base.js"></script>
+<script src="game-combat.js"></script>
+<script src="game-render.js"></script>
+<script src="game-v05.js"></script>
+<script src="game-ui.js"></script>
+<script src="game-net-v05.js"></script>
+<script src="game-v06.js"></script>
+<script src="game-v07.js"></script>
+<script src="game-v08.js"></script>
+<script src="game-v09.js"></script>
+<script src="game-v09-fix.js"></script>
+<script src="game-v091.js"></script>
+<script src="game-v092.js"></script>
+<script src="game-v100.js"></script>
+<script src="game-v110.js"></script>
+</body></html>
