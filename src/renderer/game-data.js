@@ -1,106 +1,35 @@
 window.RAID_DATA = {
   bosses: [
     {
-      id: 'void-beast',
-      number: 1,
-      name: 'VOID BEAST',
-      subtitle: 'THE VOID BEAST',
-      hp: 1000,
-      accent: '#ff315c',
-      territory: 'rgba(24,49,67,.95)',
-      description: 'Radial barrages and aimed bursts.',
-      attack: 'void'
+      id:'void-beast', number:1, name:'VOID BEAST', subtitle:'THE VOID BEAST',
+      hp:1110, accent:'#ff315c', territory:'rgba(24,49,67,.95)',
+      description:'放射弾幕と狙い撃ち。後半ほど発射密度が上がる。',
+      attack:'void'
     },
     {
-      id: 'richochet',
-      number: 2,
-      name: 'RICHOCHET',
-      subtitle: 'THE BOUNCING CORE',
-      hp: 1200,
-      accent: '#ff934d',
-      territory: 'rgba(62,48,40,.95)',
-      description: 'Large projectiles ricochet five times.',
-      attack: 'ricochet'
+      id:'richochet', number:2, name:'RICHOCHET', subtitle:'THE BOUNCING CORE',
+      hp:1110, accent:'#ff934d', territory:'rgba(62,48,40,.95)',
+      description:'大型反射弾。壁と陣地で5回反射して消滅する。',
+      attack:'ricochet'
     },
     {
-      id: 'grid-seraph',
-      number: 3,
-      name: 'GRID SERAPH',
-      subtitle: 'THE CUTTING HALO',
-      hp: 1500,
-      accent: '#b77cff',
-      territory: 'rgba(48,35,72,.95)',
-      description: 'Rotating crossfire plus predictive bursts.',
-      attack: 'seraph'
+      id:'grid-seraph', number:3, name:'GRID SERAPH', subtitle:'THE CUTTING HALO',
+      hp:1110, accent:'#b77cff', territory:'rgba(48,35,72,.95)',
+      description:'専用ギミック：4本の回転レーザーと定期テレポートで線を切断する。',
+      attack:'seraph'
     }
   ],
-
   skills: [
-    {
-      id: 'phase-dash',
-      name: 'PHASE DASH',
-      description: 'Short invulnerable dash in the movement direction.',
-      cooldown: 8,
-      type: 'dash'
-    },
-    {
-      id: 'repair-pulse',
-      name: 'REPAIR PULSE',
-      description: 'Restore 1 HP, up to your current maximum.',
-      cooldown: 24,
-      type: 'heal'
-    },
-    {
-      id: 'overclock',
-      name: 'OVERCLOCK',
-      description: 'Gain +45% movement speed for 5 seconds.',
-      cooldown: 18,
-      type: 'speed'
-    }
+    {id:'phase-dash',name:'PHASE DASH',description:'Short invulnerable dash in the movement direction.',cooldown:8,type:'dash'},
+    {id:'repair-pulse',name:'REPAIR PULSE',description:'Restore 1 HP, up to your current maximum.',cooldown:24,type:'heal'},
+    {id:'overclock',name:'OVERCLOCK',description:'Gain +45% movement speed for 5 seconds.',cooldown:18,type:'speed'}
   ],
-
   charms: [
-    {
-      id: 'runner-coil',
-      name: 'RUNNER COIL',
-      rarity: 'COMMON',
-      description: '+12% movement speed.',
-      modifiers: { moveSpeedMultiplier: 1.12 }
-    },
-    {
-      id: 'spare-heart',
-      name: 'SPARE HEART',
-      rarity: 'UNCOMMON',
-      description: '+1 maximum HP.',
-      modifiers: { maxHpAdd: 1 }
-    },
-    {
-      id: 'cold-clock',
-      name: 'COLD CLOCK',
-      rarity: 'RARE',
-      description: 'Skill cooldowns recover 18% faster.',
-      modifiers: { cooldownMultiplier: 0.82 }
-    },
-    {
-      id: 'hazard-lace',
-      name: 'HAZARD LACE',
-      rarity: 'UNCOMMON',
-      description: '+15% movement speed while drawing a cut.',
-      modifiers: { drawingSpeedMultiplier: 1.15 }
-    },
-    {
-      id: 'relic-teeth',
-      name: 'RELIC TEETH',
-      rarity: 'RARE',
-      description: 'Relics deal +20% boss damage.',
-      modifiers: { relicDamageMultiplier: 1.20 }
-    },
-    {
-      id: 'soft-reset',
-      name: 'SOFT RESET',
-      rarity: 'EPIC',
-      description: 'First lethal hit in a raid leaves you at 1 HP.',
-      modifiers: { deathSaveCharges: 1 }
-    }
+    {id:'runner-coil',name:'RUNNER COIL',rarity:'COMMON',description:'+12% movement speed.',modifiers:{moveSpeedMultiplier:1.12}},
+    {id:'spare-heart',name:'SPARE HEART',rarity:'UNCOMMON',description:'+1 maximum HP.',modifiers:{maxHpAdd:1}},
+    {id:'cold-clock',name:'COLD CLOCK',rarity:'RARE',description:'Skill cooldowns recover 18% faster.',modifiers:{cooldownMultiplier:.82}},
+    {id:'hazard-lace',name:'HAZARD LACE',rarity:'UNCOMMON',description:'+15% movement speed while drawing a cut.',modifiers:{drawingSpeedMultiplier:1.15}},
+    {id:'relic-teeth',name:'RELIC TEETH',rarity:'RARE',description:'Core destruction deals +20% integrity damage, but every core is still required.',modifiers:{relicDamageMultiplier:1.20}},
+    {id:'soft-reset',name:'SOFT RESET',rarity:'EPIC',description:'First lethal hit in a raid leaves you at 1 HP.',modifiers:{deathSaveCharges:1}}
   ]
 };
