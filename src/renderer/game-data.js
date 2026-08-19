@@ -2,27 +2,33 @@ window.RAID_DATA = {
   bosses: [
     {
       id:'void-beast', number:1, name:'VOID BEAST', subtitle:'THE VOID BEAST',
-      hp:1110, accent:'#ff315c', territory:'rgba(18,72,102,.99)',
+      hp:1110, accent:'#ff315c', territory:'rgba(18,82,118,.99)',
       description:'放射弾幕と狙い撃ち。後半ほど発射密度が上がる。',
       attack:'void'
     },
     {
       id:'richochet', number:2, name:'RICHOCHET', subtitle:'THE BOUNCING CORE',
-      hp:1110, accent:'#ff934d', territory:'rgba(112,52,20,.99)',
+      hp:1110, accent:'#ff934d', territory:'rgba(128,58,18,.99)',
       description:'大型反射弾。壁と陣地で5回反射して消滅する。',
       attack:'ricochet'
     },
     {
       id:'grid-seraph', number:3, name:'GRID SERAPH', subtitle:'THE CUTTING HALO',
-      hp:1110, accent:'#b77cff', territory:'rgba(78,38,126,.99)',
-      description:'専用ギミック：4本の回転レーザーと定期テレポートで線を切断する。',
+      hp:1110, accent:'#b77cff', territory:'rgba(92,42,148,.99)',
+      description:'専用ギミック：4本の回転レーザーを維持したまま、ステージ内をゆっくり漂う。',
       attack:'seraph'
     },
     {
       id:'gravity-maw', number:4, name:'GRAVITY MAW', subtitle:'THE SINKING ENGINE',
-      hp:1110, accent:'#5dffbf', territory:'rgba(18,100,74,.99)',
-      description:'専用ギミック：3つの重力井戸が移動を引き寄せ、周期的な衝撃波リングを放つ。',
+      hp:1110, accent:'#5dffbf', territory:'rgba(14,116,82,.99)',
+      description:'専用ギミック：3つの重力井戸が移動を引き寄せ、周期的に全方位弾幕を放つ。',
       attack:'gravity'
+    },
+    {
+      id:'oracle-engine', number:5, name:'ORACLE ENGINE', subtitle:'THE MARKED GROUND',
+      hp:1110, accent:'#ff4fd8', territory:'rgba(128,26,100,.99)',
+      description:'汎用AoE予兆システムを使用。円形予兆の猶予後、その範囲内にダメージを与える。',
+      attack:'telegraph'
     }
   ],
   skills: [
