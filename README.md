@@ -1,32 +1,39 @@
-# RAID QIX v1.0.0
+# RAID QIX v1.1.0
 
-## Player hitbox
-Visual player size is unchanged, but damaging collision uses a smaller ~4.5px hurtbox.
+## Ghost laser-line fix
+The thin yellow lines in Random Raid were traced to the legacy `drawRandomBoss()` implementation.
+It drew two raw lines whenever the procedural config had `laser=true`, independently from the real
+SweepLaser attack. That legacy rendering has been removed. Only actual scheduled SweepLaser entities
+can now draw laser warnings or active beams.
 
-## Rotating laser start bug
-- Sweep laser state is cleared on boss reset and Random Raid floor setup.
-- No sweep laser can persist from the previous boss.
-- Initial laser timing gets a startup delay so a warning line cannot be stuck on frame 0.
+## Title / multiplayer
+- SOLO MODE removed from the visible title flow.
+- Main modes are BOSS MODE and RANDOM BOSS MODE.
+- Steam room creation, invite, join-by-code, member list and lobby ID are on the title screen.
+- Steam invite uses `Lobby.openInviteDialog()` / overlay invite support when available.
+- Boss selection is on the title screen.
+- One-player rooms can still start a raid.
 
-## Reward opening
-Rewards are sealed cards and open one by one.
-Hover a revealed reward to inspect its effects before claiming.
+## SoundCloud Boss Tracklist
+- Add SoundCloud track URLs from the title screen.
+- Optional BPM value can be stored per track.
+- In Random Boss Mode, the host selects one track from the playlist every time the floor/boss changes.
+- The selected URL is sent to lobby members with `bgm-sync`.
+- Playback uses SoundCloud's official HTML5 Widget API.
+- BGM volume controls SoundCloud widget volume.
+- Host/client BGM starts are scheduled with the same short delay for approximate sync.
 
-## Procedural hack-and-slash charms
-Charms are generated with 1-5 effects. Rarity is determined only by the number of effects.
-Duplicate effects are allowed and every effect rolls from +1 to +5.
+## Beat visuals
+SoundCloud Widget PLAY_PROGRESS drives a visual pulse.
+If current track metadata exposes BPM it is used; otherwise the playlist BPM value is used.
+The boss and bullets receive a small visual-only vibration on beats. Gameplay collision positions are unchanged.
 
-Examples:
-- R1: SPD+1
-- R2: SPD+2 / HP+4
-- R5: SPD+1 / SPD+1 / CDR+5 / CORE+2 / HP+1
+## Settings
+- Master Volume
+- BGM Volume
+- SE Volume
+- PSX Pixelize
+- Screen Shake
+- Control Mode
 
-A 5-effect charm is maximum rarity even if every roll is only +1.
-
-## Fusion
-Drag five unique charms into the five fusion slots.
-All five must share the same rarity.
-Fusion consumes those items and creates one random charm of the next rarity.
-R5 is the maximum.
-
-Use `start.bat` to run and `build.bat` to build.
+Use `start.bat` and `build.bat`.
