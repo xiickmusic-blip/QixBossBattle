@@ -1,38 +1,22 @@
-# RAID QIX v0.9.0
+# RAID QIX v0.9.1
 
-## Combat
-- Fixed circular AoE telegraph impact resolution and added visible impact flash.
-- All bosses now use a shared slow rotation rate.
-- All normal bosses receive slow randomized drifting movement.
-- Random bosses also use deliberately slow randomized movement.
-- Rotating laser attacks are now a high-weight Random Raid module and visibly telegraphed.
-- GRAVITY MAW keeps shared laser mechanics.
-- Former unavoidable top/bottom curtain attacks are now striped alternating lanes with safe gaps.
+Combat audit / bug-fix release.
 
-## New reusable mechanics
-- Expanding donut rings
-- Collapsing donut rings
-- Triple predictive AoEs
-- Pizza-slice cone mechanics
-- Alternating cross lines
-- Edge-in striped lanes
-- Meteor spreads
-- Bait + spread tracking AoEs
-- Rotating line walls
+## Fixed
+- Random Raid circular AoEs now always advance from warning to impact.
+- Lines, cones, donuts and tracking circles now share a reliable warning -> impact -> remove lifecycle.
+- Laser warnings now turn into a clearly visible bright damage beam.
+- Random Raid now explicitly ticks both circle and non-circle telegraph systems.
+- Random bosses now always drift slowly instead of relying on the old bypassed `drift` path.
+- Random bosses also always rotate slowly.
+- Rotating lasers now have a strong chance to appear in Random Raid and use the shared laser module.
 
-All are reusable functions and several are added to the Random Raid attack registry.
+## Root causes fixed
+v0.8 bypassed the old random-boss updater. That meant movement and some telegraph ticking were skipped.
+Circle AoEs could be spawned by Random Raid but never advanced to their impact state.
+The laser module used a short line-active state with weak visual feedback, so it could appear to be only a thin warning line.
 
-## Random Raid rewards
-When the player dies, rewards are granted based on bosses defeated:
-- 1 defeated boss = 1 charm
-- 10 defeated bosses = 10 charms
-The run reward is rolled immediately and added to inventory.
-
-## Inventory
-- Inventory list and item detail are now separate.
-- Clicking an item opens rarity, description, owned count and equip action.
-- Rarity colors: Common / Uncommon / Rare / Epic.
-- Fusion: 3 charms of the same rarity -> 1 random charm of the next rarity.
-- Epic is currently the top rarity and cannot be fused further.
+## Validation
+All renderer JavaScript files pass `node --check`.
 
 Use `start.bat` to run and `build.bat` to build.
