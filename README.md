@@ -1,33 +1,45 @@
-# RAID QIX v2.0.0
+# RAID QIX v2.0.1
 
-Full renderer/UI refactor.
+Hotfix after the v2 flat renderer refactor.
 
-Runtime renderer is flattened to six files:
-- `data.js`
-- `core.js`
-- `combat.js`
-- `render.js`
-- `systems.js`
-- `ui.js`
+## START RAID transition fix
 
-The old patch chain (`game-v05.js` through `game-v129.js`) is not used in v2.
+Root cause:
+`resetGame()` and Random Boss setup still called the legacy global `updateHud()`.
+The v2 UI renamed the implementation to `updateHudV2()`, so clicking START did this:
 
-Gameplay retained:
-- QIX territory capture
-- six fixed bosses
-- all-cores-required victory
-- Random Boss endless mode
-- circular / line / cone / donut / tracking telegraphs
-- rotating sweep lasers
-- triangle territory-breaker projectiles
-- procedural attack library
-- Steam P2P room flow
-- SoundCloud boss playlist
-- procedural charms, rarity, inventory, equip, five-item fusion
-- keyboard / click / cursor-follow controls
-- PSX pixel rendering
+1. `state.mode` became `raid`
+2. reset began
+3. `updateHud()` threw `ReferenceError`
+4. `UI.showGame()` was never reached
+5. the game loop continued behind the title, which is why damage SE could be heard
 
-UI is rebuilt from scratch in a rave flyer / street graphic direction with a responsive 16:9 layout and one UI controller.
+v2.0.1 restores a canonical `updateHud` hook and explicitly aliases it to `updateHudV2`.
 
-`start.bat` runs the game.
-`build.bat` creates a Windows portable build.
+The start sequence is also reordered:
+- create room
+- prepare music
+- initialize boss/game state
+- hide menu / reveal game canvas
+- only then enable `state.mode = raid`
+- play BGM / send network start
+
+If initialization fails, the title remains visible and a readable error panel is shown.
+
+## Additional audit fixes
+- fixed Random Boss floor setup accidentally recursing into itself
+- restored Boss 5/6 runtime timer state
+- replaced old fixed-charm reward DOM path with the procedural v2 reward queue
+- added missing random attack category sets
+- added global runtime error / unhandled promise reporting
+
+## Runtime architecture
+Renderer remains exactly six JavaScript files:
+- data.js
+- core.js
+- combat.js
+- render.js
+- systems.js
+- ui.js
+
+No v05-v129 patch stack is loaded.
