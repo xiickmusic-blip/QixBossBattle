@@ -1,27 +1,10 @@
 {
   "name": "raid-qix",
-  "version": "0.9.2",
+  "version": "1.0.0",
   "description": "Electron + Steam P2P QIX boss raid prototype",
   "main": "src/main.js",
-  "scripts": {
-    "start": "electron .",
-    "dev": "electron .",
-    "build": "electron-builder --win portable",
-    "build:dir": "electron-builder --dir"
-  },
-  "dependencies": {
-    "steamworks.js": "^0.4.0"
-  },
-  "devDependencies": {
-    "electron": "^39.2.7",
-    "electron-builder": "^26.0.12"
-  },
-  "build": {
-    "appId": "com.raidqix.game",
-    "productName": "RAID QIX",
-    "directories": {"output": "dist"},
-    "files": ["src/**/*","package.json","steam_appid.txt"],
-    "asarUnpack": ["node_modules/steamworks.js/**/*"],
-    "win": {"target": "portable","artifactName": "RAID-QIX-${version}-${arch}.${ext}"}
-  }
+  "scripts": {"start": "electron .", "dev": "electron .", "build": "electron-builder --win portable", "build:dir": "electron-builder --dir"},
+  "dependencies": {"steamworks.js": "^0.4.0"},
+  "devDependencies": {"electron": "^39.2.7", "electron-builder": "^26.0.12"},
+  "build": {"appId": "com.raidqix.game", "productName": "RAID QIX", "directories": {"output": "dist"}, "files": ["src/**/*","package.json","steam_appid.txt"], "asarUnpack": ["node_modules/steamworks.js/**/*"], "win": {"target": "portable", "artifactName": "RAID-QIX-${version}-${arch}.${ext}"}}
 }
