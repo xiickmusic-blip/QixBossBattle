@@ -1,0 +1,42 @@
+RAID QIX v1.2.9 UI AUDIT
+
+1. SCRIPT LAYERING
+index.html loads many sequential compatibility patches:
+game-v05 -> v06 -> v07 -> v08 -> v09 -> fixes -> v1.0 -> v1.1 -> v1.2.x.
+Multiple scripts replace the same global functions.
+
+2. EVENT HANDLERS
+Before v1.2.9, primary handlers had multiple generations:
+- titleBossMode/titleRandomMode: multiple reassignments
+- titleStartRaid: multiple reassignments
+- fusionButton: multiple reassignments
+- rewardContinue: multiple reassignments
+
+3. SCREEN VISIBILITY
+Visibility was simultaneously managed by:
+- CSS .screen.active
+- openScreen()
+- inline !important styles
+- v1.2.7 Surface Controller
+- watchdog repair
+This is now normalized by the final UI Kernel.
+
+4. POINTER EVENTS
+No full-screen high-z pointer-blocking overlay was found.
+HUD is pointer-events:none and screen z-index is 100.
+The final kernel explicitly restores pointer-events:auto for controls on active surfaces.
+
+5. PERFORMANCE
+The v1.2.7 MutationObserver feedback risk was already removed in v1.2.8.
+Menu combat/PSX rendering is also suspended in v1.2.8.
+
+6. REMAINING TECH DEBT
+The renderer still contains many compatibility patch files.
+For long-term stability, the next major refactor should flatten these into:
+- game-core.js
+- combat.js
+- render.js
+- ui.js
+- audio.js
+- network.js
+instead of continuing vNNN override scripts.
