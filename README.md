@@ -1,41 +1,32 @@
-# RAID QIX v0.9.2
+# RAID QIX v1.0.0
 
-## Laser fix
-The old random rotating laser was actually a static Line AoE snapshot. It could appear as a thin stationary line and disappear without looking like a fired laser.
+## Player hitbox
+Visual player size is unchanged, but damaging collision uses a smaller ~4.5px hurtbox.
 
-v0.9.2 adds a real persistent SweepLaser entity:
-- dashed warning rays
-- warning -> active transition
-- bright thick damage beams
-- beams rotate continuously while active
-- 2 / 3 / 4 arm variants
-- randomized slow angular speed
-- reusable by any boss and Random Raid
+## Rotating laser start bug
+- Sweep laser state is cleared on boss reset and Random Raid floor setup.
+- No sweep laser can persist from the previous boss.
+- Initial laser timing gets a startup delay so a warning line cannot be stuck on frame 0.
 
-## Random Raid pacing
-Random Raid now uses an attack scheduler instead of firing whichever AoE is available immediately.
+## Reward opening
+Rewards are sealed cards and open one by one.
+Hover a revealed reward to inspect its effects before claiming.
 
-Floor 1 starts around 1.15 to 1.75 seconds between mechanics. As floors increase the interval gradually shortens, with a lower bound so it does not become impossible. Area-heavy mechanics get extra recovery time, and repeated area attacks bias the next selection toward bullet or movement mechanics.
+## Procedural hack-and-slash charms
+Charms are generated with 1-5 effects. Rarity is determined only by the number of effects.
+Duplicate effects are allowed and every effect rolls from +1 to +5.
 
-## New reusable gimmicks
-- Broken bullet ring with safe gaps
-- Two-safe-quadrant attack
-- Prediction feint
-- Clock-position AoEs
-- Footstep / trail AoEs
-- In -> Out -> In combo
-- Double spiral barrage
-- Alternating stripe swap
-- Boss dash movement mechanic
-- Orbiting satellite burst
-- Persistent rotating sweep lasers
+Examples:
+- R1: SPD+1
+- R2: SPD+2 / HP+4
+- R5: SPD+1 / SPD+1 / CDR+5 / CORE+2 / HP+1
 
-Random bosses now draw from a larger attack pool and use 4-9 attack types depending on depth.
+A 5-effect charm is maximum rarity even if every roll is only +1.
 
-## Movement
-Every Random Raid boss is explicitly assigned a visible slow drift speed of 6-14 units/sec. Bosses bounce at arena edges and can occasionally use the separate dash gimmick.
-
-## Validation
-All renderer JavaScript files pass `node --check`.
+## Fusion
+Drag five unique charms into the five fusion slots.
+All five must share the same rarity.
+Fusion consumes those items and creates one random charm of the next rarity.
+R5 is the maximum.
 
 Use `start.bat` to run and `build.bat` to build.
