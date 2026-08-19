@@ -1,0 +1,17 @@
+const EventEmitter = require('events');
+const LOBBY_TYPE_FRIENDS_ONLY=1,SEND_UNRELIABLE=0,SEND_RELIABLE=2;
+class SteamService extends EventEmitter{
+  constructor(){super();this.enabled=false;this.client=null;this.steamworks=null;this.lobby=null;this.lobbyId=null;this.members=[];this.localId='local';this.localName='Local Player';this.onMessage=null;this.pollTimer=null}
+  async init(){try{const appId=Number(process.env.RAID_QIX_STEAM_APP_ID||480);this.steamworks=require('steamworks.js');this.client=this.steamworks.init(appId);const local=this.client.localplayer.getSteamId();this.localId=String(local.steamId64);this.localName=this.client.localplayer.getName();this.enabled=true;this.startP2PPoll()}catch(e){console.warn('[Steam] Offline fallback:',e.message);this.enabled=false}return this.getState()}
+  getState(){return{enabled:this.enabled,lobbyId:this.lobbyId,localId:this.localId,localName:this.localName,members:this.members}}
+  async createLobby(options={}){if(!this.enabled){this.lobbyId='LOCAL-HOST';this.members=[{id:this.localId,name:this.localName,host:true}];return this.getState()}const maxMembers=Math.max(2,Math.min(16,Number(options.maxMembers)||4));this.lobby=await this.client.matchmaking.createLobby(LOBBY_TYPE_FRIENDS_ONLY,maxMembers);this.lobbyId=String(this.lobby.id);await this.refreshMembers();return this.getState()}
+  async joinLobby(id){if(!this.enabled){this.lobbyId=String(id||'LOCAL-HOST');this.members=[{id:this.localId,name:this.localName,host:false}];return this.getState()}this.lobby=await this.client.matchmaking.joinLobby(BigInt(id));this.lobbyId=String(this.lobby.id);await this.refreshMembers();return this.getState()}
+  async leaveLobby(){try{this.lobby?.leave?.()}catch{}this.lobby=null;this.lobbyId=null;this.members=[];return this.getState()}
+  async refreshMembers(){if(!this.lobby){this.members=[];return[]}try{const ids=this.lobby.getMembers();const owner=String(this.lobby.getOwner()?.steamId64??this.lobby.getOwner?.()??'');this.members=ids.map(x=>{const id=String(x.steamId64??x);let name=id;try{name=this.client.friends.getFriendPersonaName(x)}catch{}return{id,name,host:id===owner}})}catch{this.members=[{id:this.localId,name:this.localName,host:true}]}return this.members}
+  getMembers(){return this.members}
+  openInviteDialog(){if(!this.enabled||!this.lobby)return false;try{if(typeof this.lobby.openInviteDialog==='function'){this.lobby.openInviteDialog();return true}if(this.client?.overlay?.activateInviteDialog){this.client.overlay.activateInviteDialog(this.lobby.id);return true}}catch{}return false}
+  send(payload){if(!this.enabled||!this.lobby)return false;const reliable=new Set(['raid-start','random-start','random-floor','bgm-sync','grid-state','capture-state','core-destroyed']);const data=Buffer.from(JSON.stringify(payload));for(const m of this.members){if(String(m.id)===String(this.localId))continue;try{this.client.networking.sendP2PPacket(BigInt(m.id),data,reliable.has(payload.type)?SEND_RELIABLE:SEND_UNRELIABLE,0)}catch{}}return true}
+  startP2PPoll(){clearInterval(this.pollTimer);this.pollTimer=setInterval(()=>{if(!this.enabled)return;try{while(this.client.networking.isP2PPacketAvailable(0)>0){const pkt=this.client.networking.readP2PPacket(65536,0);if(!pkt)break;const buf=Buffer.from(pkt.data||pkt);const msg=JSON.parse(buf.toString('utf8'));this.onMessage?.(msg)}}catch{}},16)}
+  dispose(){clearInterval(this.pollTimer);this.pollTimer=null;try{this.lobby?.leave?.()}catch{}}
+}
+module.exports=SteamService;
