@@ -8,5 +8,7 @@ contextBridge.exposeInMainWorld('raidAPI', {
   getMembers: () => ipcRenderer.invoke('steam:get-members'),
   inviteLobby: () => ipcRenderer.invoke('steam:invite-lobby'),
   send: payload => ipcRenderer.invoke('steam:send', payload),
+  setDisplayMode: mode => ipcRenderer.invoke('window:set-display-mode', mode),
+  getDisplayMode: () => ipcRenderer.invoke('window:get-display-mode'),
   onMessage: callback => ipcRenderer.on('steam:message', (_event, payload) => callback(payload))
 });
