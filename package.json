@@ -1,6 +1,6 @@
 {
   "name": "raid-qix",
-  "version": "1.2.2",
+  "version": "1.2.7",
   "description": "Electron + Steam P2P QIX boss raid prototype",
   "main": "src/main.js",
   "scripts": {
