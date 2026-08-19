@@ -1,23 +1,18 @@
-# RAID QIX v0.6.0
+# RAID QIX v0.7.0
 
 Electron + Steam P2P QIX boss raid prototype.
 
-## v0.6.0
-- Added BOSS 6: HEX CHOIR.
-- HEX CHOIR reuses the shared circular AoE telegraph system.
-- Its main pattern creates a ring of telegraphed AoEs with one visible safe gap.
-- Added three control modes in Settings:
-  - KEYBOARD / WASD
-  - MOUSE CLICK MOVE
-  - CURSOR FOLLOW
-- CLICK MOVE: left-click a destination and move toward it. Dragging updates the destination.
-- CURSOR FOLLOW: continuously move toward the cursor without clicking.
-- Right-click activates the equipped skill in both mouse control modes.
-- Control mode is persisted in localStorage.
-- Existing keyboard controls and E-key skill remain available in keyboard mode.
+## v0.7.0
+- Added triangular territory-breaker projectiles.
+- Triangle bullets explode when they hit captured territory and erase a circular chunk back into danger space.
+- GRAVITY MAW now demonstrates triangle volleys.
+- Added reusable attack-module registry with radial, aimed, ricochet, triangle breaker, AoE telegraph, spiral, cross, gap-ring, needle, and heavy-orb attacks.
+- Added RANDOM RAID endless mode from the title screen.
+- Each floor procedurally generates a boss name, colors, attack-module combination, attack values, speed, timing, movement traits, and optional gravity/laser traits.
+- Module count and pressure scale upward with floor.
+- Clearing all cores advances to the next floor without ending the run.
+- HP persists between random-raid floors. The run ends on player death.
+- Best random-raid floor is persisted locally.
+- Existing keyboard, click-move, and cursor-follow controls remain available.
 
-## Quick start
-- `start.bat`
-- `build.bat`
-
-Steam development App ID: 480
+Use `start.bat` to run and `build.bat` to build.
