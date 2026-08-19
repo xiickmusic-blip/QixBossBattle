@@ -34,9 +34,18 @@ playerHit=function(){
   }
 };
 
-// Load the v0.9.2 combat scheduler/laser patch on GitHub snapshots.
-// The downloadable ZIP references it directly from index.html; this keeps the Git branch in sync.
-const v092Script=document.createElement('script');
-v092Script.src='game-v092.js';
-v092Script.async=false;
-document.body.appendChild(v092Script);
+// GitHub branch loader for post-v1.1 runtime patches.
+// index.html in older branch snapshots does not reference these files directly,
+// so load them after every static script has finished.
+window.addEventListener('load',()=>{
+  const v120=document.createElement('script');
+  v120.src='game-v120.js';
+  v120.async=false;
+  v120.onload=()=>{
+    const v121=document.createElement('script');
+    v121.src='game-v121.js';
+    v121.async=false;
+    document.body.appendChild(v121);
+  };
+  document.body.appendChild(v120);
+});
