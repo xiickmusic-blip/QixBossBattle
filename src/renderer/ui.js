@@ -1,9 +1,194 @@
-const UI={screen:'title',selected:null,fusion:[null,null,null,null,null],show(name){this.screen=name;for(const id of['titleScreen','loadoutScreen','settingsScreen','rewardScreen'])document.getElementById(id).classList.remove('active');document.getElementById(name+'Screen')?.classList.add('active');if(name==='loadout')this.renderLoadout();if(name==='settings')this.renderSettings();if(name==='title')this.renderTitle()},showGame(){this.screen='game';for(const id of['titleScreen','loadoutScreen','settingsScreen','rewardScreen'])document.getElementById(id).classList.remove('active')},renderTitle(){document.getElementById('navBoss').classList.toggle('active',state.titleMode==='boss');document.getElementById('navRandom').classList.toggle('active',state.titleMode==='random');document.getElementById('modeTitle').textContent=state.titleMode==='boss'?'BOSS MODE':'RANDOM BOSS';document.getElementById('bossPanel').style.visibility=state.titleMode==='boss'?'visible':'hidden';document.getElementById('sessionCode').textContent=state.titleLobbyId||'NO ROOM';this.renderBosses();this.renderTracks();this.renderMembers()},renderBosses(){const grid=document.getElementById('bossGrid');grid.innerHTML='';for(const b of DATA.bosses){const el=document.createElement('button');el.className='boss-card'+(state.bossId===b.id?' selected':'');el.innerHTML=`<strong>B${b.number} · ${b.name}</strong><small>${b.description}</small>`;el.onclick=()=>{state.bossId=b.id;this.renderBosses()};grid.appendChild(el)}document.getElementById('bossCount').textContent=String(DATA.bosses.length).padStart(2,'0')},renderTracks(){const list=document.getElementById('trackList');list.innerHTML='';state.soundcloudPlaylist.forEach((t,i)=>{const row=document.createElement('div');row.className='track';row.innerHTML=`<span>${String(i+1).padStart(2,'0')}</span><span class="url">${t.url}</span><span>${t.bpm}</span><button>×</button>`;row.querySelector('button').onclick=()=>{state.soundcloudPlaylist.splice(i,1);save('raidqix.soundcloudPlaylist',state.soundcloudPlaylist);this.renderTracks()};list.appendChild(row)})},renderMembers(){const list=document.getElementById('memberList');list.innerHTML='';const ms=state.members||[];document.getElementById('memberCount').textContent=`${ms.length}/4`;if(!ms.length){list.innerHTML='<div class="tiny">ROOM NOT CREATED</div>';return}ms.forEach(m=>{const d=document.createElement('div');d.className='member';d.innerHTML=`<span>${m.host?'HOST · ':''}${m.name}</span><span>${String(m.id)===String(state.localSteamId)?'YOU':''}</span>`;list.appendChild(d)})},renderLoadout(){this.renderSkills();this.renderEquip();this.renderInventory('inventoryGrid');this.renderDetail();this.renderFusion()},renderSkills(){const box=document.getElementById('skillList');box.innerHTML='';DATA.skills.forEach(s=>{const b=document.createElement('button');b.className='skill'+(state.equippedSkill===s.id?' selected':'');b.innerHTML=`<strong>${s.name}</strong><small>${s.description} · ${s.cooldown}s</small>`;b.onclick=()=>{state.equippedSkill=s.id;save('raidqix.skill',s.id);this.renderSkills()};box.appendChild(b)})},renderEquip(){const box=document.getElementById('equipSlots');box.innerHTML='';for(let i=0;i<2;i++){const uid=state.equippedCharms[i],c=proceduralCharmByUid(uid);const b=document.createElement('div');b.className='equip-slot';b.innerHTML=c?`<strong>SLOT ${i+1} · ${c.name}</strong><div class="tiny">${charmAffixText(c)} · CLICK TO UNEQUIP</div>`:`<strong>SLOT ${i+1} · EMPTY</strong><div class="tiny">DROP CHARM HERE</div>`;b.onclick=()=>{if(c){unequipCharm(c.uid);this.renderLoadout()}};b.ondragover=e=>e.preventDefault();b.ondrop=e=>{e.preventDefault();const uid=e.dataTransfer.getData('text/charm');if(uid){equipCharm(uid,i);this.renderLoadout()}};box.appendChild(b)}},glyph(c){return({SPD:'»',HP:'♥',CDR:'⌁',DRAW:'✦',CORE:'◆',SAVE:'⊕',DASH:'➤',LUCK:'✧',ARM:'⬡',ARC:'⌁'})[c.affixes[0]?.key]||'◇'},renderInventory(id){const box=document.getElementById(id);box.innerHTML='';const items=[...state.inventory].sort((a,b)=>b.rarity-a.rarity),count=Math.max(54,Math.ceil(items.length/9)*9);if(id==='inventoryGrid')document.getElementById('inventoryCount').textContent=`${items.length} ITEMS`;for(let i=0;i<count;i++){const c=items[i],b=document.createElement('button');if(!c){b.className='item-slot';b.disabled=true;box.appendChild(b);continue}b.className=`item-slot r${c.rarity}`+(this.selected===c.uid?' selected':'');b.draggable=true;b.innerHTML=`<span class="fx">${c.affixes.length}FX</span><span class="glyph">${this.glyph(c)}</span><span class="rank">R${c.rarity}</span>`;b.title=`${c.name} · ${charmAffixText(c)}`;b.onclick=()=>{this.selected=c.uid;this.renderInventory('inventoryGrid');this.renderDetail()};b.ondblclick=()=>{if(state.equippedCharms.includes(c.uid))unequipCharm(c.uid);else equipCharm(c.uid,state.equippedCharms.length<2?state.equippedCharms.length:1);this.renderLoadout()};b.ondragstart=e=>e.dataTransfer.setData('text/charm',c.uid);box.appendChild(b)}},renderDetail(){const c=proceduralCharmByUid(this.selected),box=document.getElementById('itemDetail');if(!c){box.innerHTML='<h3>SELECT ITEM</h3><div class="tiny">Click a square slot.</div>';return}box.innerHTML=`<h3>${c.name}</h3><div class="tiny">R${c.rarity} · ${c.rarity} EFFECTS</div><div style="margin-top:12px">${c.affixes.map(a=>`<div><b>${a.key}+${a.value}</b></div>`).join('')}</div><div class="detail-actions"><button id="eq1" class="mini">EQUIP 1</button><button id="eq2" class="mini">EQUIP 2</button></div>${state.equippedCharms.includes(c.uid)?'<button id="uneq" class="mini" style="margin-top:6px">UNEQUIP</button>':''}`;box.querySelector('#eq1').onclick=()=>{equipCharm(c.uid,0);this.renderLoadout()};box.querySelector('#eq2').onclick=()=>{equipCharm(c.uid,1);this.renderLoadout()};box.querySelector('#uneq')?.addEventListener('click',()=>{unequipCharm(c.uid);this.renderLoadout()})},renderFusion(){const slots=document.getElementById('fusionSlots');slots.innerHTML='';for(let i=0;i<5;i++){const uid=this.fusion[i],c=proceduralCharmByUid(uid),d=document.createElement('div');d.className='fusion-slot';d.innerHTML=c?`<span>${c.name}<br>R${c.rarity}</span>`:'DROP';d.ondragover=e=>e.preventDefault();d.ondrop=e=>{e.preventDefault();const uid=e.dataTransfer.getData('text/charm');if(uid){const old=this.fusion.indexOf(uid);if(old>=0)this.fusion[old]=null;this.fusion[i]=uid;this.renderFusion()}};d.onclick=()=>{this.fusion[i]=null;this.renderFusion()};slots.appendChild(d)}this.renderInventory('fusionInventory');document.getElementById('fusionStatus').textContent=`${this.fusion.filter(Boolean).length}/5 SET`},renderSettings(){document.getElementById('controlMode').value=state.settings.controlMode||'keyboard';document.getElementById('masterVolume').value=state.settings.volume;document.getElementById('bgmVolume').value=state.bgmVolume;document.getElementById('seVolume').value=state.seVolume;document.getElementById('pixelMode').value=state.settings.pixelMode?'1':'0';document.getElementById('masterVal').textContent=state.settings.volume;document.getElementById('bgmVal').textContent=state.bgmVolume;document.getElementById('seVal').textContent=state.seVolume},queueRewards(items){state.rewardQueue=items;state.rewardRevealIndex=0;const box=document.getElementById('rewardList');box.innerHTML='';items.forEach((c,i)=>{const d=document.createElement('div');d.className=`reward-card r${c.rarity}`;d.dataset.i=i;d.innerHTML='<strong>???</strong><div class="tiny">SEALED</div>';box.appendChild(d)});document.getElementById('rewardProgress').textContent=`0/${items.length}`;document.getElementById('rewardBack').style.display='none';this.show('reward')}};
-async function startSelectedRaid(){if(!state.titleLobbyId)await createRoom();if(!state.isHost)return;state.multiplayer=true;state.mode='raid';state.gameOver=false;state.victory=false;const track=MusicSystem.pick();if(track){await MusicSystem.prepare(track);sendNet({type:'bgm-sync',track})}if(state.titleMode==='random'){state.randomRun.active=true;state.randomRun.floor=1;setupRandomBossForFloor(1,true);sendNet({type:'random-start',floor:1,config:state.randomRun.config,def:state.randomRun.def,relics:state.relics,grid:cloneGrid()})}else{state.randomRun.active=false;resetGame();sendNet({type:'raid-start',bossId:state.bossId,relics:state.relics,grid:cloneGrid()})}if(track)MusicSystem.play();UI.showGame()}
-document.getElementById('navBoss').onclick=()=>{state.titleMode='boss';UI.renderTitle()};document.getElementById('navRandom').onclick=()=>{state.titleMode='random';UI.renderTitle()};document.getElementById('navLoadout').onclick=()=>UI.show('loadout');document.getElementById('navSettings').onclick=()=>UI.show('settings');document.getElementById('loadoutBack').onclick=()=>UI.show('title');document.getElementById('settingsBack').onclick=()=>UI.show('title');document.getElementById('gearTab').onclick=()=>{document.getElementById('gearView').style.display='grid';document.getElementById('fusionView').style.display='none';document.getElementById('gearTab').classList.add('active');document.getElementById('fusionTab').classList.remove('active')};document.getElementById('fusionTab').onclick=()=>{document.getElementById('gearView').style.display='none';document.getElementById('fusionView').style.display='grid';document.getElementById('fusionTab').classList.add('active');document.getElementById('gearTab').classList.remove('active');UI.renderFusion()};document.getElementById('fuseBtn').onclick=()=>{const res=fuseFiveCharms(UI.fusion.filter(Boolean));document.getElementById('fusionStatus').textContent=res.ok?`CREATED ${res.item.name}`:res.msg;if(res.ok)UI.fusion=[null,null,null,null,null];UI.renderLoadout()};document.getElementById('startRaid').onclick=startSelectedRaid;document.getElementById('roomBtn').onclick=async()=>{await createRoom();UI.renderTitle()};document.getElementById('inviteBtn').onclick=async()=>{if(!state.titleLobbyId)await createRoom();await window.raidAPI.inviteLobby?.();UI.renderTitle()};document.getElementById('copyBtn').onclick=async()=>{if(state.titleLobbyId)await navigator.clipboard.writeText(String(state.titleLobbyId))};document.getElementById('joinBtn').onclick=async()=>{const id=document.getElementById('joinCode').value.trim();if(id){await joinRoom(id);UI.renderTitle()}};document.getElementById('addTrack').onclick=()=>{const url=document.getElementById('trackUrl').value.trim(),bpm=Math.max(40,Math.min(240,Number(document.getElementById('trackBpm').value)||120));try{const u=new URL(url);if(!/(^|\.)soundcloud\.com$/i.test(u.hostname))return}catch{return}state.soundcloudPlaylist.push({id:'sc_'+Date.now().toString(36),url,bpm});save('raidqix.soundcloudPlaylist',state.soundcloudPlaylist);document.getElementById('trackUrl').value='';UI.renderTracks()};document.getElementById('controlMode').onchange=e=>{state.settings.controlMode=e.target.value;save('raidqix.settings',state.settings)};document.getElementById('displayMode').onchange=e=>window.raidAPI?.setDisplayMode?.(e.target.value);document.getElementById('masterVolume').oninput=e=>{state.settings.volume=Number(e.target.value);save('raidqix.settings',state.settings);UI.renderSettings()};document.getElementById('bgmVolume').oninput=e=>{state.bgmVolume=Number(e.target.value);save('raidqix.bgmVolume',state.bgmVolume);MusicSystem.bind()?.setVolume(MusicSystem.volume());UI.renderSettings()};document.getElementById('seVolume').oninput=e=>{state.seVolume=Number(e.target.value);save('raidqix.seVolume',state.seVolume);UI.renderSettings()};document.getElementById('pixelMode').onchange=e=>{state.settings.pixelMode=e.target.value==='1';save('raidqix.settings',state.settings)};
-document.getElementById('openReward').onclick=()=>{const i=state.rewardRevealIndex;if(i>=state.rewardQueue.length)return;const c=state.rewardQueue[i],el=document.querySelector(`.reward-card[data-i="${i}"]`);el.classList.add('revealed');el.innerHTML=`<strong>${c.name}</strong><div class="tiny">R${c.rarity}</div>`;el.onmouseenter=()=>document.getElementById('rewardDetail').innerHTML=`<h3>${c.name}</h3>${c.affixes.map(a=>`<div>${a.key}+${a.value}</div>`).join('')}`;state.rewardRevealIndex++;document.getElementById('rewardProgress').textContent=`${state.rewardRevealIndex}/${state.rewardQueue.length}`;if(state.rewardRevealIndex>=state.rewardQueue.length)document.getElementById('rewardBack').style.display='inline-block'};document.getElementById('rewardBack').onclick=()=>UI.show('title');
-let mouse={x:0,y:0,targetX:null,targetY:null,left:false};function toLogical(e){const rect=canvas.getBoundingClientRect(),px=(e.clientX-rect.left)*(canvas.width/rect.width),py=(e.clientY-rect.top)*(canvas.height/rect.height),scale=Math.min(canvas.width/LOGICAL_W,canvas.height/LOGICAL_H),dw=LOGICAL_W*scale,dh=LOGICAL_H*scale;return{x:(px-(canvas.width-dw)/2)/scale,y:(py-(canvas.height-dh)/2)/scale}}canvas.addEventListener('mousemove',e=>{const p=toLogical(e);mouse.x=p.x;mouse.y=p.y;if((state.settings.controlMode||'keyboard')==='click'&&mouse.left){mouse.targetX=p.x;mouse.targetY=p.y}});canvas.addEventListener('mousedown',e=>{if(e.button===0){mouse.left=true;const p=toLogical(e);mouse.targetX=p.x;mouse.targetY=p.y}if(e.button===2&&state.mode==='raid'){e.preventDefault();useSkill()}});addEventListener('mouseup',e=>{if(e.button===0)mouse.left=false});canvas.addEventListener('contextmenu',e=>e.preventDefault());const moveKeyboard=movePlayer;movePlayer=function(dt){const mode=state.settings.controlMode||'keyboard';if(mode==='keyboard')return moveKeyboard(dt);const tx=mode==='follow'?mouse.x:mouse.targetX,ty=mode==='follow'?mouse.y:mouse.targetY;if(tx==null||ty==null)return;let dx=tx-player.x,dy=ty-player.y,d=Math.hypot(dx,dy);if(d<4){if(mode==='click'){mouse.targetX=mouse.targetY=null}return}dx/=d;dy/=d;const ox=player.x,oy=player.y,step=Math.min(currentSpeed()*dt,d);player.x+=dx*step;player.y+=dy*step;player.x=Math.max(world.x,Math.min(world.x+world.w,player.x));player.y=Math.max(world.y,Math.min(world.y+world.h,player.y));const safe=isSafeWorld(player.x,player.y);if(safe){player.lastSafeX=player.x;player.lastSafeY=player.y}if(!player.drawing&&!safe){player.drawing=true;player.line=[{x:ox,y:oy},{x:player.x,y:player.y}]}if(player.drawing){const lastp=player.line[player.line.length-1];if(Math.hypot(player.x-lastp.x,player.y-lastp.y)>3)player.line.push({x:player.x,y:player.y});if(safe&&player.line.length>4)finishLine()}};
+// RAID QIX v2 UI + application controller. One owner, no patch chain.
+
+const UI={
+  screen:'title',
+  selected:null,
+  gearTab:'gear',
+  fusion:[null,null,null,null,null],
+  show(name){
+    this.screen=name;
+    for(const id of ['titleScreen','loadoutScreen','settingsScreen','rewardScreen'])document.getElementById(id).classList.remove('active');
+    document.getElementById(name+'Screen')?.classList.add('active');
+    if(name==='loadout')this.renderLoadout();
+    if(name==='settings')this.renderSettings();
+    if(name==='title')this.renderTitle();
+  },
+  showGame(){this.screen='game';for(const id of ['titleScreen','loadoutScreen','settingsScreen','rewardScreen'])document.getElementById(id).classList.remove('active')},
+  renderTitle(){
+    document.getElementById('navBoss').classList.toggle('active',state.titleMode==='boss');
+    document.getElementById('navRandom').classList.toggle('active',state.titleMode==='random');
+    document.getElementById('modeTitle').textContent=state.titleMode==='boss'?'BOSS MODE':'RANDOM BOSS';
+    document.getElementById('bossPanel').style.visibility=state.titleMode==='boss'?'visible':'hidden';
+    document.getElementById('sessionCode').textContent=state.titleLobbyId||'NO ROOM';
+    this.renderBosses();this.renderTracks();this.renderMembers();
+  },
+  renderBosses(){
+    const grid=document.getElementById('bossGrid');grid.innerHTML='';
+    for(const b of DATA.bosses){const el=document.createElement('button');el.className='boss-card'+(state.bossId===b.id?' selected':'');el.innerHTML=`<strong>B${b.number} · ${b.name}</strong><small>${b.description}</small>`;el.onclick=()=>{state.bossId=b.id;this.renderBosses()};grid.appendChild(el)}
+    document.getElementById('bossCount').textContent=String(DATA.bosses.length).padStart(2,'0');
+  },
+  renderTracks(){
+    const list=document.getElementById('trackList');list.innerHTML='';
+    state.soundcloudPlaylist.forEach((t,i)=>{const row=document.createElement('div');row.className='track';row.innerHTML=`<span>${String(i+1).padStart(2,'0')}</span><span class="url">${t.url}</span><span>${t.bpm}</span><button>×</button>`;row.querySelector('button').onclick=()=>{state.soundcloudPlaylist.splice(i,1);save('raidqix.soundcloudPlaylist',state.soundcloudPlaylist);this.renderTracks()};list.appendChild(row)})
+  },
+  renderMembers(){
+    const list=document.getElementById('memberList');list.innerHTML='';
+    const ms=state.members||[];document.getElementById('memberCount').textContent=`${ms.length}/4`;
+    if(!ms.length){list.innerHTML='<div class="tiny">ROOM NOT CREATED</div>';return}
+    ms.forEach(m=>{const d=document.createElement('div');d.className='member';d.innerHTML=`<span>${m.host?'HOST · ':''}${m.name}</span><span>${String(m.id)===String(state.localSteamId)?'YOU':''}</span>`;list.appendChild(d)})
+  },
+  renderLoadout(){this.renderSkills();this.renderEquip();this.renderInventory('inventoryGrid');this.renderDetail();this.renderFusion()},
+  renderSkills(){const box=document.getElementById('skillList');box.innerHTML='';DATA.skills.forEach(s=>{const b=document.createElement('button');b.className='skill'+(state.equippedSkill===s.id?' selected':'');b.innerHTML=`<strong>${s.name}</strong><small>${s.description} · ${s.cooldown}s</small>`;b.onclick=()=>{state.equippedSkill=s.id;save('raidqix.skill',s.id);this.renderSkills()};box.appendChild(b)})},
+  renderEquip(){
+    const box=document.getElementById('equipSlots');box.innerHTML='';
+    for(let i=0;i<2;i++){const uid=state.equippedCharms[i],c=proceduralCharmByUid(uid);const b=document.createElement('div');b.className='equip-slot';b.dataset.slot=i;b.innerHTML=c?`<strong>SLOT ${i+1} · ${c.name}</strong><div class="tiny">${charmAffixText(c)} · CLICK TO UNEQUIP</div>`:`<strong>SLOT ${i+1} · EMPTY</strong><div class="tiny">DROP CHARM HERE</div>`;b.onclick=()=>{if(c){unequipCharm(c.uid);this.renderLoadout()}};b.ondragover=e=>e.preventDefault();b.ondrop=e=>{e.preventDefault();const uid=e.dataTransfer.getData('text/charm');if(uid){equipCharm(uid,i);this.renderLoadout()}};box.appendChild(b)}
+  },
+  glyph(c){return ({SPD:'»',HP:'♥',CDR:'⌁',DRAW:'✦',CORE:'◆',SAVE:'⊕',DASH:'➤',LUCK:'✧',ARM:'⬡',ARC:'⌁'})[c.affixes[0]?.key]||'◇'},
+  renderInventory(id){
+    const box=document.getElementById(id);box.innerHTML='';const items=[...state.inventory].sort((a,b)=>b.rarity-a.rarity);
+    const count=Math.max(54,Math.ceil(items.length/9)*9);if(id==='inventoryGrid')document.getElementById('inventoryCount').textContent=`${items.length} ITEMS`;
+    for(let i=0;i<count;i++){const c=items[i],b=document.createElement('button');if(!c){b.className='item-slot';b.disabled=true;box.appendChild(b);continue}b.className=`item-slot r${c.rarity}`+(this.selected===c.uid?' selected':'');b.draggable=true;b.innerHTML=`<span class="fx">${c.affixes.length}FX</span><span class="glyph">${this.glyph(c)}</span><span class="rank">R${c.rarity}</span>`;b.title=`${c.name} · ${charmAffixText(c)}`;b.onclick=()=>{this.selected=c.uid;this.renderInventory('inventoryGrid');this.renderDetail()};b.ondblclick=()=>{if(state.equippedCharms.includes(c.uid))unequipCharm(c.uid);else equipCharm(c.uid,state.equippedCharms.length<2?state.equippedCharms.length:1);this.renderLoadout()};b.ondragstart=e=>e.dataTransfer.setData('text/charm',c.uid);box.appendChild(b)}
+  },
+  renderDetail(){
+    const c=proceduralCharmByUid(this.selected),box=document.getElementById('itemDetail');
+    if(!c){box.innerHTML='<h3>SELECT ITEM</h3><div class="tiny">Click a square slot.</div>';return}
+    box.innerHTML=`<h3>${c.name}</h3><div class="tiny">R${c.rarity} · ${c.rarity} EFFECTS</div><div style="margin-top:12px">${c.affixes.map(a=>`<div><b>${a.key}+${a.value}</b></div>`).join('')}</div><div class="detail-actions"><button id="eq1" class="mini">EQUIP 1</button><button id="eq2" class="mini">EQUIP 2</button></div>${state.equippedCharms.includes(c.uid)?'<button id="uneq" class="mini" style="margin-top:6px">UNEQUIP</button>':''}`;
+    box.querySelector('#eq1').onclick=()=>{equipCharm(c.uid,0);this.renderLoadout()};box.querySelector('#eq2').onclick=()=>{equipCharm(c.uid,1);this.renderLoadout()};box.querySelector('#uneq')?.addEventListener('click',()=>{unequipCharm(c.uid);this.renderLoadout()});
+  },
+  renderFusion(){
+    const slots=document.getElementById('fusionSlots');slots.innerHTML='';
+    for(let i=0;i<5;i++){const uid=this.fusion[i],c=proceduralCharmByUid(uid),d=document.createElement('div');d.className='fusion-slot';d.innerHTML=c?`<span>${c.name}<br>R${c.rarity}</span>`:'DROP';d.ondragover=e=>e.preventDefault();d.ondrop=e=>{e.preventDefault();const uid=e.dataTransfer.getData('text/charm');if(uid){const old=this.fusion.indexOf(uid);if(old>=0)this.fusion[old]=null;this.fusion[i]=uid;this.renderFusion()}};d.onclick=()=>{this.fusion[i]=null;this.renderFusion()};slots.appendChild(d)}
+    this.renderInventory('fusionInventory');document.getElementById('fusionStatus').textContent=`${this.fusion.filter(Boolean).length}/5 SET`;
+  },
+  renderSettings(){
+    document.getElementById('controlMode').value=state.settings.controlMode||'keyboard';document.getElementById('masterVolume').value=state.settings.volume;document.getElementById('bgmVolume').value=state.bgmVolume;document.getElementById('seVolume').value=state.seVolume;document.getElementById('pixelMode').value=state.settings.pixelMode?'1':'0';
+    document.getElementById('masterVal').textContent=state.settings.volume;document.getElementById('bgmVal').textContent=state.bgmVolume;document.getElementById('seVal').textContent=state.seVolume;
+  },
+  queueRewards(items){
+    state.rewardQueue=items;state.rewardRevealIndex=0;const box=document.getElementById('rewardList');box.innerHTML='';items.forEach((c,i)=>{const d=document.createElement('div');d.className=`reward-card r${c.rarity}`;d.dataset.i=i;d.innerHTML='<strong>???</strong><div class="tiny">SEALED</div>';box.appendChild(d)});document.getElementById('rewardProgress').textContent=`0/${items.length}`;document.getElementById('rewardBack').style.display='none';this.show('reward')
+  }
+};
+
+async function startSelectedRaid(){
+  const btn=document.getElementById('startRaid');
+  if(btn.disabled)return;
+  btn.disabled=true;
+  const old=btn.innerHTML;
+  btn.innerHTML='<strong>PREPARING RAID</strong><small>PLEASE WAIT</small>';
+
+  try{
+    if(!state.titleLobbyId)await createRoom();
+    if(!state.isHost)throw new Error('Only the room host can start the raid.');
+
+    state.multiplayer=true;
+    state.gameOver=false;
+    state.victory=false;
+
+    const track=MusicSystem.pick();
+    if(track)await MusicSystem.prepare(track);
+
+    if(state.titleMode==='random'){
+      state.randomRun.active=true;
+      state.randomRun.floor=1;
+      setupRandomBossForFloor(1,true);
+    }else{
+      state.randomRun.active=false;
+      resetGame();
+    }
+
+    UI.showGame();
+    state.mode='raid';
+
+    if(track){
+      sendNet({type:'bgm-sync',track});
+      MusicSystem.play();
+    }
+
+    if(state.titleMode==='random'){
+      sendNet({type:'random-start',floor:1,config:state.randomRun.config,def:state.randomRun.def,relics:state.relics,grid:cloneGrid()});
+    }else{
+      sendNet({type:'raid-start',bossId:state.bossId,relics:state.relics,grid:cloneGrid()});
+    }
+
+    updateHudV2();
+  }catch(error){
+    console.error('[START RAID]',error);
+    state.mode='menu';
+    state.randomRun.active=false;
+    UI.show('title');
+    showAppError(error);
+  }finally{
+    btn.disabled=false;
+    btn.innerHTML=old;
+  }
+}
+
+document.getElementById('navBoss').onclick=()=>{state.titleMode='boss';UI.renderTitle()};
+document.getElementById('navRandom').onclick=()=>{state.titleMode='random';UI.renderTitle()};
+document.getElementById('navLoadout').onclick=()=>UI.show('loadout');
+document.getElementById('navSettings').onclick=()=>UI.show('settings');
+document.getElementById('loadoutBack').onclick=()=>UI.show('title');document.getElementById('settingsBack').onclick=()=>UI.show('title');
+document.getElementById('gearTab').onclick=()=>{document.getElementById('gearView').style.display='grid';document.getElementById('fusionView').style.display='none';document.getElementById('gearTab').classList.add('active');document.getElementById('fusionTab').classList.remove('active')};
+document.getElementById('fusionTab').onclick=()=>{document.getElementById('gearView').style.display='none';document.getElementById('fusionView').style.display='grid';document.getElementById('fusionTab').classList.add('active');document.getElementById('gearTab').classList.remove('active');UI.renderFusion()};
+document.getElementById('fuseBtn').onclick=()=>{const res=fuseFiveCharms(UI.fusion.filter(Boolean));document.getElementById('fusionStatus').textContent=res.ok?`CREATED ${res.item.name}`:res.msg;if(res.ok)UI.fusion=[null,null,null,null,null];UI.renderLoadout()};
+document.getElementById('startRaid').onclick=startSelectedRaid;
+document.getElementById('roomBtn').onclick=async()=>{await createRoom();UI.renderTitle()};document.getElementById('inviteBtn').onclick=async()=>{if(!state.titleLobbyId)await createRoom();await window.raidAPI.inviteLobby?.();UI.renderTitle()};document.getElementById('copyBtn').onclick=async()=>{if(state.titleLobbyId)await navigator.clipboard.writeText(String(state.titleLobbyId))};document.getElementById('joinBtn').onclick=async()=>{const id=document.getElementById('joinCode').value.trim();if(id){await joinRoom(id);UI.renderTitle()}};
+document.getElementById('addTrack').onclick=()=>{const url=document.getElementById('trackUrl').value.trim(),bpm=Math.max(40,Math.min(240,Number(document.getElementById('trackBpm').value)||120));try{const u=new URL(url);if(!/(^|\.)soundcloud\.com$/i.test(u.hostname))return}catch{return}state.soundcloudPlaylist.push({id:'sc_'+Date.now().toString(36),url,bpm});save('raidqix.soundcloudPlaylist',state.soundcloudPlaylist);document.getElementById('trackUrl').value='';UI.renderTracks()};
+document.getElementById('controlMode').onchange=e=>{state.settings.controlMode=e.target.value;save('raidqix.settings',state.settings)};document.getElementById('displayMode').onchange=e=>window.raidAPI?.setDisplayMode?.(e.target.value);
+document.getElementById('masterVolume').oninput=e=>{state.settings.volume=Number(e.target.value);save('raidqix.settings',state.settings);UI.renderSettings()};document.getElementById('bgmVolume').oninput=e=>{state.bgmVolume=Number(e.target.value);save('raidqix.bgmVolume',state.bgmVolume);MusicSystem.bind()?.setVolume(MusicSystem.volume());UI.renderSettings()};document.getElementById('seVolume').oninput=e=>{state.seVolume=Number(e.target.value);save('raidqix.seVolume',state.seVolume);UI.renderSettings()};document.getElementById('pixelMode').onchange=e=>{state.settings.pixelMode=e.target.value==='1';save('raidqix.settings',state.settings)};
+
+document.getElementById('openReward').onclick=()=>{const i=state.rewardRevealIndex;if(i>=state.rewardQueue.length)return;const c=state.rewardQueue[i],el=document.querySelector(`.reward-card[data-i="${i}"]`);el.classList.add('revealed');el.innerHTML=`<strong>${c.name}</strong><div class="tiny">R${c.rarity}</div>`;el.onmouseenter=()=>document.getElementById('rewardDetail').innerHTML=`<h3>${c.name}</h3>${c.affixes.map(a=>`<div>${a.key}+${a.value}</div>`).join('')}`;state.rewardRevealIndex++;document.getElementById('rewardProgress').textContent=`${state.rewardRevealIndex}/${state.rewardQueue.length}`;if(state.rewardRevealIndex>=state.rewardQueue.length)document.getElementById('rewardBack').style.display='inline-block'};
+document.getElementById('rewardBack').onclick=()=>UI.show('title');
+
+let mouse={x:0,y:0,targetX:null,targetY:null,left:false};
+function toLogical(e){const rect=canvas.getBoundingClientRect(),px=(e.clientX-rect.left)*(canvas.width/rect.width),py=(e.clientY-rect.top)*(canvas.height/rect.height),scale=Math.min(canvas.width/LOGICAL_W,canvas.height/LOGICAL_H),dw=LOGICAL_W*scale,dh=LOGICAL_H*scale;return{x:(px-(canvas.width-dw)/2)/scale,y:(py-(canvas.height-dh)/2)/scale}}
+canvas.addEventListener('mousemove',e=>{const p=toLogical(e);mouse.x=p.x;mouse.y=p.y;if((state.settings.controlMode||'keyboard')==='click'&&mouse.left){mouse.targetX=p.x;mouse.targetY=p.y}});
+canvas.addEventListener('mousedown',e=>{if(e.button===0){mouse.left=true;const p=toLogical(e);mouse.targetX=p.x;mouse.targetY=p.y}if(e.button===2&&state.mode==='raid'){e.preventDefault();useSkill()}});
+addEventListener('mouseup',e=>{if(e.button===0)mouse.left=false});canvas.addEventListener('contextmenu',e=>e.preventDefault());
+const moveKeyboard=movePlayer;
+movePlayer=function(dt){const mode=state.settings.controlMode||'keyboard';if(mode==='keyboard')return moveKeyboard(dt);const tx=mode==='follow'?mouse.x:mouse.targetX,ty=mode==='follow'?mouse.y:mouse.targetY;if(tx==null||ty==null)return;let dx=tx-player.x,dy=ty-player.y,d=Math.hypot(dx,dy);if(d<4){if(mode==='click'){mouse.targetX=mouse.targetY=null}return}dx/=d;dy/=d;keys.w=keys.a=keys.s=keys.d=false;const ox=player.x,oy=player.y,step=Math.min(currentSpeed()*dt,d);player.x+=dx*step;player.y+=dy*step;player.x=Math.max(world.x,Math.min(world.x+world.w,player.x));player.y=Math.max(world.y,Math.min(world.y+world.h,player.y));const safe=isSafeWorld(player.x,player.y);if(safe){player.lastSafeX=player.x;player.lastSafeY=player.y}if(!player.drawing&&!safe){player.drawing=true;player.line=[{x:ox,y:oy},{x:player.x,y:player.y}]}if(player.drawing){const lastp=player.line[player.line.length-1];if(Math.hypot(player.x-lastp.x,player.y-lastp.y)>3)player.line.push({x:player.x,y:player.y});if(safe&&player.line.length>4)finishLine()}};
+
 function updateHudV2(){const d=bossDef();document.getElementById('bossName').textContent=state.mode==='raid'?`${d.name} · ${d.number}`:'NO BOSS';document.getElementById('bossSubtitle').textContent=state.mode==='raid'?d.subtitle:'SELECT RAID';document.getElementById('bossHp').style.width=state.boss?`${Math.max(0,state.boss.hp/state.boss.maxHp*100)}%`:'0%';document.getElementById('area').textContent=Math.floor(state.area);document.getElementById('relics').textContent=state.relicCount;document.getElementById('coreTotal').textContent=state.relics.length||8;document.getElementById('damage').textContent=state.damage;document.getElementById('hp').textContent=`${playerHP}/${playerMaxHP}`;const s=skillDef();document.getElementById('skillHud').textContent=state.skillCooldown>0?`${s.name} ${state.skillCooldown.toFixed(1)}s`:s.name;const cs=charmDefs();document.getElementById('charmAHud').textContent=cs[0]?.name||'-';document.getElementById('charmBHud').textContent=cs[1]?.name||'-'}
-const playerHitBase=playerHit;playerHit=function(){const before=playerHP;playerHitBase();if(playerHP<before)AudioSystem.se('hurt')};const useSkillBase=useSkill;useSkill=function(){const before=state.skillCooldown;useSkillBase();if(before<=0&&state.skillCooldown>0)AudioSystem.se('skill')};const finishLineBase=finishLine;finishLine=function(){const was=player.drawing&&player.line.length>4;finishLineBase();if(was)AudioSystem.se('capture')};
-const winRaidBase=winRaid;winRaid=function(){if(!state.randomRun.active)return winRaidBase();if(remainingCores()>0||state.victory)return;state.victory=true;AudioSystem.se('bosskill');const next=state.randomRun.floor+1;setTimeout(async()=>{if(playerHP<=0)return;state.randomRun.floor=next;state.victory=false;setupRandomBossForFloor(next,false);const track=MusicSystem.pick();if(track){await MusicSystem.prepare(track);sendNet({type:'bgm-sync',track});MusicSystem.play()}if(state.multiplayer&&state.isHost)sendNet({type:'random-floor',floor:next,config:state.randomRun.config,def:state.randomRun.def,relics:state.relics,grid:cloneGrid()})},700)};
-let last=performance.now();function frame(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(state.mode==='raid'&&!state.gameOver){movePlayer(dt);if(!state.multiplayer||state.isHost)bossAttack(dt);else{updateTelegraphs(dt,false);updateExtraTelegraphs(dt,false);updateSweepLasers(dt,false)}updateProjectiles(dt);updateEffects(dt);updateTimers(dt);networkTick(dt);drawSceneV2(now);renderPSXV2();updateHudV2()}else{displayCtx.fillStyle='#000';displayCtx.fillRect(0,0,canvas.width,canvas.height)}requestAnimationFrame(frame)}buildGrid();resizeDisplay();resetBoss();resetPlayer();refreshSteam().then(()=>UI.renderTitle());UI.show('title');requestAnimationFrame(frame);
+
+updateHud=updateHudV2;
+
+const playerHitBase=playerHit;playerHit=function(){const before=playerHP;playerHitBase();if(playerHP<before)AudioSystem.se('hurt')};
+const useSkillBase=useSkill;useSkill=function(){const before=state.skillCooldown;useSkillBase();if(before<=0&&state.skillCooldown>0)AudioSystem.se('skill')};
+const finishLineBase=finishLine;finishLine=function(){const was=player.drawing&&player.line.length>4;finishLineBase();if(was)AudioSystem.se('capture')};
+
+const setupRandomBossForFloorBaseV2=setupRandomBossForFloor;
+function setupRandomBossForFloorV2(floor,first=false){
+  setupRandomBossForFloorBaseV2(floor,first);
+  state.randomRun.pattern=randomPatternForFloor(floor);
+  state.randomGimmickTimer=1.1;
+  state.randomAreaStreak=0;
+  state.bossSpinSpeed=v08Rand(.05,.10);
+  state.randomRun.config.driftSpeed=v08Rand(6,14);
+  state.sweepLasers=[];state.telegraphs=[];state.lineTelegraphs=[];state.coneTelegraphs=[];state.donutTelegraphs=[];state.chaseTelegraphs=[];
+  updateHudV2();
+}
+setupRandomBossForFloor=setupRandomBossForFloorV2;
+
+const winRaidBase=winRaid;winRaid=function(broadcast=false){
+  if(!state.randomRun.active){const before=state.victory;winRaidBase(broadcast);if(!before&&state.victory)AudioSystem.se('bosskill');return}
+  if(remainingCores()>0||state.victory)return;state.victory=true;AudioSystem.se('bosskill');const next=state.randomRun.floor+1;setTimeout(async()=>{if(playerHP<=0)return;state.randomRun.floor=next;state.victory=false;setupRandomBossForFloor(next,false);const track=MusicSystem.pick();if(track){await MusicSystem.prepare(track);sendNet({type:'bgm-sync',track});MusicSystem.play()}if(state.multiplayer&&state.isHost)sendNet({type:'random-floor',floor:next,config:state.randomRun.config,def:state.randomRun.def,relics:state.relics,grid:cloneGrid()})},700)
+};
+
+function showAppError(error){
+  let el=document.getElementById('appError');
+  if(!el){
+    el=document.createElement('div');
+    el.id='appError';
+    el.style.cssText='position:fixed;z-index:9999;right:14px;bottom:14px;max-width:560px;padding:12px 14px;background:#19070d;border:1px solid #ff3d91;color:#ffd9e9;font:11px/1.5 monospace;white-space:pre-wrap;box-shadow:0 20px 60px #000';
+    el.onclick=()=>el.remove();
+    document.body.appendChild(el);
+  }
+  el.textContent='RAID QIX ERROR — click to dismiss\\n\\n'+String(error?.stack||error?.message||error);
+}
+window.addEventListener('error',e=>showAppError(e.error||e.message));
+window.addEventListener('unhandledrejection',e=>showAppError(e.reason));
+
+let last=performance.now();
+function frame(now){const dt=Math.min(.033,(now-last)/1000);last=now;if(state.mode==='raid'&&!state.gameOver){movePlayer(dt);if(!state.multiplayer||state.isHost)bossAttack(dt);else{updateTelegraphs(dt,false);updateExtraTelegraphs(dt,false);updateSweepLasers(dt,false)}updateProjectiles(dt);updateEffects(dt);updateTimers(dt);networkTick(dt);drawSceneV2(now);renderPSXV2();updateHudV2()}else if(now%200<17){displayCtx.fillStyle='#000';displayCtx.fillRect(0,0,canvas.width,canvas.height)}requestAnimationFrame(frame)}
+
+buildGrid();resizeDisplay();resetBoss();resetPlayer();refreshSteam().then(()=>UI.renderTitle());UI.show('title');requestAnimationFrame(frame);
