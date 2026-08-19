@@ -1,44 +1,69 @@
 # RAID QIX
 
-Electron-based QIX boss raid prototype with a Steam multiplayer adapter.
+Electron-based QIX boss raid prototype with Steam lobby + P2P multiplayer.
 
 ## Current features
 
 - Title screen with Solo, Lobby, Settings, and Loadout
-- Three data-driven bosses
-  - VOID BEAST
-  - RICHOCHET
-  - GRID SERAPH
+- Three data-driven bosses: VOID BEAST, RICHOCHET, GRID SERAPH
 - QIX territory capture combat and relic boss damage
-- One skill slot
-- Two charm slots
-- Charm modifiers for movement speed, max HP, cooldown, drawing speed, relic damage, and death-save charges
-- Boss-clear treasure chest that awards one random charm
-- Local inventory/loadout persistence through `localStorage`
-- Steam lobby/P2P adapter boundary through the Electron preload bridge
+- One skill slot and two charm slots
+- Persistent charm inventory/loadout
+- Boss-clear treasure chest awarding one random charm per player
+- Steam friends-only lobby creation and lobby-ID joining
+- Steam P2P packet transport through `steamworks.js`
+- Remote player position and drawing-line synchronization
+- Host-authoritative boss attacks, boss HP, and projectile snapshots
+- Client capture-grid merge through the host
+- Client relic damage forwarded to the host
 - Offline fallback for UI/gameplay development
 
-## Run
+## Quick start on Windows
+
+Double-click:
+
+- `start.bat` — installs dependencies if needed, then runs `npm start`
+- `build.bat` — installs dependencies if needed, then runs `npm run build`
+
+Or use npm directly:
 
 ```bash
 npm install
 npm start
+npm run build
 ```
+
+The Windows portable build is written to `dist/`.
 
 ## Steam development
 
-The current adapter initializes Steamworks with Spacewar App ID `480` for development. Replace this with the real App ID before release.
+`steam_appid.txt` currently contains Spacewar App ID `480` for local Steam multiplayer testing. Replace it with the real RAID QIX App ID before shipping.
 
-The Steam implementation is intentionally isolated in `src/steam.js`. The current renderer protocol already sends lobby/game packets, but the final Steam Networking Messages/Sockets transport must be wired against the exact `steamworks.js` version selected for production.
+You can also override the development App ID for the current process with the environment variable `RAID_QIX_STEAM_APP_ID`.
+
+Steam integration is isolated in `src/steam.js`. The current implementation targets the API exposed by `steamworks.js` 0.4.x: Steam lobby creation/join, P2P packet send/read, P2P session acceptance, and Steam callbacks.
+
+## Multiplayer model
+
+The lobby owner acts as raid host.
+
+- Every player simulates their own movement and personal HP.
+- Players send position, drawing line, and HP snapshots roughly every 80 ms.
+- The host generates boss attacks and broadcasts boss/projectile state roughly every 100 ms.
+- A client's completed QIX capture is sent to the host and merged into the shared grid.
+- Relic damage caused by a client is sent as a reliable boss-damage packet to the host.
+- The host decides boss death and broadcasts raid clear.
+
+This is the first playable network model. Interpolation, reconnection, host migration, packet versioning, and anti-cheat validation are appropriate next hardening steps.
 
 ## Extending bosses
 
-Add a boss entry to `src/renderer/game-data.js` and implement its attack identifier in `bossAttack()` in `src/renderer/game.js`. Shared HP/UI/reward systems automatically consume the boss definition.
+Add a boss entry to `src/renderer/game-data.js` and implement its attack identifier in `bossAttack()` in `src/renderer/game.js`. Shared HP/UI/reward systems consume the boss definition automatically.
 
 ## Extending charms
 
-Charms are data entries with a `modifiers` object. Existing modifiers are composed centrally by `modifiers()` in `game.js`, making new equipment straightforward. For entirely new effect families, add a modifier key and consume it at the appropriate gameplay hook.
+Charms are data entries with a `modifiers` object. Existing modifiers are composed centrally by `modifiers()` in `game.js`. New modifier families can be added by defining a key and consuming it at the appropriate gameplay hook.
 
-## Multiplayer architecture
+## Packaging note
 
-The game uses a host-oriented protocol. Lobby creation/joining lives in the main process and renderer gameplay communicates through a narrow preload API. Boss selection/start packets are already represented; authoritative state synchronization and remote-player rendering are the next production step.
+`electron-builder` is configured for a Windows portable executable. `steamworks.js` is unpacked from ASAR because it contains native binaries. Test the packaged build with Steam running before distributing a release build.
