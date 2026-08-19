@@ -19,7 +19,7 @@ Electron-based QIX boss raid prototype with Steam lobby + P2P multiplayer.
 - remote player position and drawing-line sync
 - host-authoritative boss attack / HP / projectile state
 - capture grid merge through host
-- client core destruction forwarded to host
+- authoritative core destruction synchronized by core ID
 - raid-clear reward per player
 
 This is the first playable network model. Interpolation, reconnection, host migration, protocol versioning, and anti-cheat validation are next hardening steps.
