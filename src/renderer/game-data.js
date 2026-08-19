@@ -29,6 +29,12 @@ window.RAID_DATA = {
       hp:1110, accent:'#ff4fd8', territory:'rgba(128,26,100,.99)',
       description:'汎用AoE予兆システムを使用。円形予兆の猶予後、その範囲内にダメージを与える。',
       attack:'telegraph'
+    },
+    {
+      id:'hex-choir', number:6, name:'HEX CHOIR', subtitle:'THE SAFE GAP',
+      hp:1110, accent:'#67a8ff', territory:'rgba(28,74,146,.99)',
+      description:'AoE予兆を輪状に展開し、1か所だけ安全な隙間を残すパターン攻撃。',
+      attack:'choir'
     }
   ],
   skills: [
