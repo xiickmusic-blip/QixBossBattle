@@ -1,6 +1,26 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const SteamService = require('./steam');
+
+const localAppData =
+  process.env.LOCALAPPDATA ||
+  process.env.APPDATA ||
+  app.getPath('temp');
+
+const raidQixData = path.join(localAppData, 'RaidQix');
+const raidQixSession = path.join(raidQixData, 'Session');
+const raidQixDiskCache = path.join(raidQixSession, 'Cache');
+
+for (const dir of [raidQixData, raidQixSession, raidQixDiskCache]) {
+  try { fs.mkdirSync(dir, { recursive: true }); } catch {}
+}
+
+try { app.setPath('userData', raidQixData); } catch {}
+try { app.setPath('sessionData', raidQixSession); } catch {}
+
+app.commandLine.appendSwitch('disk-cache-dir', raidQixDiskCache);
+app.commandLine.appendSwitch('gpu-disk-cache-size-kb', '65536');
 
 let mainWindow;
 const steam = new SteamService();
@@ -24,6 +44,27 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.executeJavaScript(`
+      (async () => {
+        const loadOnce = src => new Promise((resolve, reject) => {
+          if (document.querySelector('script[src="' + src + '"]')) return resolve();
+          const s = document.createElement('script');
+          s.src = src;
+          s.onload = resolve;
+          s.onerror = reject;
+          document.body.appendChild(s);
+        });
+        try {
+          await loadOnce('game-v128.js');
+          await loadOnce('game-v129.js');
+        } catch (e) {
+          console.error('[PATCH LOADER]', e);
+        }
+      })();
+    `).catch(error => console.warn('[PATCH LOADER]', error.message));
+  });
 }
 
 app.whenReady().then(async () => {
@@ -56,17 +97,20 @@ ipcMain.handle('steam:send', (_e, payload) => steam.send(payload));
 
 ipcMain.handle('window:set-display-mode', (_e, mode) => {
   if (!mainWindow || mainWindow.isDestroyed()) return false;
+
   const sizes = {
     '960x540': [960, 540],
     '1280x720': [1280, 720],
     '1600x900': [1600, 900],
     '1920x1080': [1920, 1080]
   };
+
   if (mode === 'fullscreen') {
     mainWindow.setFullScreen(true);
     mainWindow.setResizable(false);
     return true;
   }
+
   const size = sizes[mode] || sizes['1280x720'];
   mainWindow.setFullScreen(false);
   mainWindow.setResizable(false);
