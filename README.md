@@ -1,20 +1,39 @@
-# RAID QIX v0.9.1
+# RAID QIX v0.9.2
 
-Combat audit / bug-fix release.
+## Laser fix
+The old random rotating laser was actually a static Line AoE snapshot. It could appear as a thin stationary line and disappear without looking like a fired laser.
 
-## Fixed
-- Random Raid circular AoEs now always advance from warning to impact.
-- Lines, cones, donuts and tracking circles now share a reliable warning -> impact -> remove lifecycle.
-- Laser warnings now turn into a clearly visible bright damage beam.
-- Random Raid now explicitly ticks both circle and non-circle telegraph systems.
-- Random bosses now always drift slowly instead of relying on the old bypassed `drift` path.
-- Random bosses also always rotate slowly.
-- Rotating lasers now have a strong chance to appear in Random Raid and use the shared laser module.
+v0.9.2 adds a real persistent SweepLaser entity:
+- dashed warning rays
+- warning -> active transition
+- bright thick damage beams
+- beams rotate continuously while active
+- 2 / 3 / 4 arm variants
+- randomized slow angular speed
+- reusable by any boss and Random Raid
 
-## Root causes fixed
-v0.8 bypassed the old random-boss updater. That meant movement and some telegraph ticking were skipped.
-Circle AoEs could be spawned by Random Raid but never advanced to their impact state.
-The laser module used a short line-active state with weak visual feedback, so it could appear to be only a thin warning line.
+## Random Raid pacing
+Random Raid now uses an attack scheduler instead of firing whichever AoE is available immediately.
+
+Floor 1 starts around 1.15 to 1.75 seconds between mechanics. As floors increase the interval gradually shortens, with a lower bound so it does not become impossible. Area-heavy mechanics get extra recovery time, and repeated area attacks bias the next selection toward bullet or movement mechanics.
+
+## New reusable gimmicks
+- Broken bullet ring with safe gaps
+- Two-safe-quadrant attack
+- Prediction feint
+- Clock-position AoEs
+- Footstep / trail AoEs
+- In -> Out -> In combo
+- Double spiral barrage
+- Alternating stripe swap
+- Boss dash movement mechanic
+- Orbiting satellite burst
+- Persistent rotating sweep lasers
+
+Random bosses now draw from a larger attack pool and use 4-9 attack types depending on depth.
+
+## Movement
+Every Random Raid boss is explicitly assigned a visible slow drift speed of 6-14 units/sec. Bosses bounce at arena edges and can occasionally use the separate dash gimmick.
 
 ## Validation
 All renderer JavaScript files pass `node --check`.
