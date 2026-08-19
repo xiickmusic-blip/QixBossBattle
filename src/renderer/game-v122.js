@@ -1,5 +1,5 @@
-// RAID QIX v1.2.2
-// Clean one-screen loadout + separate fusion tab + slightly improved rarity drop rates.
+// RAID QIX v1.2.7-compatible patch
+// Clean one-screen loadout + separate fusion tab + rarity tuning + final UI surface guard.
 
 function setLoadoutTab(tab){
   const gear=tab==='gear';
@@ -41,9 +41,7 @@ function renderFusionInventoryV122(){
   for(let i=0;i<slotCount;i++){
     const c=sorted[i];
     const el=document.createElement('button');
-    if(!c){
-      el.className='mcSlot empty';el.disabled=true;grid.appendChild(el);continue;
-    }
+    if(!c){el.className='mcSlot empty';el.disabled=true;grid.appendChild(el);continue}
     el.className=`mcSlot rarity-R${c.rarity}`;
     el.draggable=true;
     el.title=`${c.name}\n${CHARM_RARITY_LABEL[c.rarity]} · ${charmAffixText(c)}`;
@@ -58,50 +56,43 @@ function renderFusionInventoryV122(){
 renderLoadout=renderLoadoutV122;
 
 const _v121FuseFive122=fuseFive;
-fuseFive=function(){
-  _v121FuseFive122();
-  renderLoadoutV122();
-  renderFusionInventoryV122();
-};
+fuseFive=function(){_v121FuseFive122();renderLoadoutV122();renderFusionInventoryV122()};
 document.getElementById('fusionButton').onclick=fuseFive;
 
 function rollRewardRarityV122(depth=1){
-  const bonus=Math.min(.16,Math.max(0,depth-1)*.006);
-  const r=Math.random();
-  if(r < .58-bonus) return 1;
-  if(r < .82-bonus*.45) return 2;
-  if(r < .94-bonus*.18) return 3;
-  if(r < .989) return 4;
-  return 5;
+  const bonus=Math.min(.16,Math.max(0,depth-1)*.006),r=Math.random();
+  if(r<.58-bonus)return 1;if(r<.82-bonus*.45)return 2;if(r<.94-bonus*.18)return 3;if(r<.989)return 4;return 5;
 }
 
-grantReward=function(){
-  const rarity=rollRewardRarityV122(1);
-  const charm=rollProceduralCharm(rarity);
-  state.inventory.push(charm);
-  save('raidqix.inventory',state.inventory);
-  queueRewards([charm]);
-};
-
-v09GrantRandomRunRewards=function(count){
-  const rewards=[];
-  for(let i=0;i<count;i++){
-    const depth=i+1;
-    const rarity=rollRewardRarityV122(depth);
-    const charm=rollProceduralCharm(rarity);
-    state.inventory.push(charm);rewards.push(charm);
-  }
-  save('raidqix.inventory',state.inventory);
-  return rewards;
-};
+grantReward=function(){const charm=rollProceduralCharm(rollRewardRarityV122(1));state.inventory.push(charm);save('raidqix.inventory',state.inventory);queueRewards([charm])};
+v09GrantRandomRunRewards=function(count){const rewards=[];for(let i=0;i<count;i++){const charm=rollProceduralCharm(rollRewardRarityV122(i+1));state.inventory.push(charm);rewards.push(charm)}save('raidqix.inventory',state.inventory);return rewards};
 
 const _v12OpenScreen122=openScreen;
-openScreen=function(id){
-  _v12OpenScreen122(id);
-  if(id==='loadoutScreen'){
-    setLoadoutTab('gear');
-    renderLoadoutV122();
+openScreen=function(id){_v12OpenScreen122(id);if(id==='loadoutScreen'){setLoadoutTab('gear');renderLoadoutV122()}};
+
+// Final UI Surface Controller.
+// The canvas always renders behind the menus, so the title must not depend on old .active mutations.
+Object.assign(state,{uiSurface:'titleScreen',raidSurfaceActive:false});
+const SURFACES=['titleScreen','loadoutScreen','settingsScreen','rewardScreen','soloScreen','lobbyScreen'];
+function applySurfaceV127(id){
+  state.uiSurface=id;
+  for(const sid of SURFACES){
+    const el=document.getElementById(sid);if(!el)continue;
+    const on=sid===id;
+    el.style.setProperty('display',on?'flex':'none','important');
+    el.style.setProperty('visibility',on?'visible':'hidden','important');
+    el.style.setProperty('pointer-events',on?'auto':'none','important');
+    el.classList.toggle('active',on);
   }
-};
+}
+const _surfaceOpen=openScreen;
+openScreen=function(id){state.raidSurfaceActive=false;try{_surfaceOpen(id)}catch{}applySurfaceV127(id)};
+const _surfaceStartRaid=startRaid;
+startRaid=function(multiplayer,broadcast){state.raidSurfaceActive=true;_surfaceStartRaid(multiplayer,broadcast);for(const sid of SURFACES){const el=document.getElementById(sid);if(el)el.style.setProperty('display','none','important')}};
+const surfaceObserver=new MutationObserver(()=>{if(state.raidSurfaceActive)return;queueMicrotask(()=>applySurfaceV127(state.uiSurface||'titleScreen'))});
+for(const sid of SURFACES){const el=document.getElementById(sid);if(el)surfaceObserver.observe(el,{attributes:true,attributeFilter:['class','style']})}
+setInterval(()=>{if(state.raidSurfaceActive)return;const id=state.uiSurface||'titleScreen',el=document.getElementById(id);if(el&&getComputedStyle(el).display==='none')applySurfaceV127(id)},100);
+state.mode='menu';if(state.randomRun)state.randomRun.active=false;applySurfaceV127('titleScreen');
+setTimeout(()=>applySurfaceV127('titleScreen'),150);
 
 setLoadoutTab('gear');
