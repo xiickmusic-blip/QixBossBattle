@@ -26,7 +26,6 @@ class SteamService extends EventEmitter {
 
   async init() {
     try {
-      // Spacewar (480) is development-only. RAID_QIX_STEAM_APP_ID can override it.
       const appId = Number(process.env.RAID_QIX_STEAM_APP_ID || 480);
       this.steamworks = require('steamworks.js');
       this.client = this.steamworks.init(appId);
@@ -84,10 +83,25 @@ class SteamService extends EventEmitter {
     return this.getState();
   }
 
-  async leaveLobby() {
-    if (this.enabled && this.lobby) {
-      this.lobby.leave();
+  openInviteDialog() {
+    if (!this.enabled || !this.lobby) return false;
+    try {
+      if (typeof this.lobby.openInviteDialog === 'function') {
+        this.lobby.openInviteDialog();
+        return true;
+      }
+      if (this.client?.overlay?.activateInviteDialog) {
+        this.client.overlay.activateInviteDialog(this.lobby.id);
+        return true;
+      }
+    } catch (error) {
+      console.warn('[Steam] Invite dialog failed:', error.message);
     }
+    return false;
+  }
+
+  async leaveLobby() {
+    if (this.enabled && this.lobby) this.lobby.leave();
     this.lobby = null;
     this.lobbyId = null;
     this.members = [];
@@ -148,9 +162,8 @@ class SteamService extends EventEmitter {
   startCallbackPump() {
     if (!this.enabled || !this.steamworks?.runCallbacks || this.callbackTimer) return;
     this.callbackTimer = setInterval(() => {
-      try { this.steamworks.runCallbacks(); } catch (error) {
-        console.warn('[Steam] Callback pump:', error.message);
-      }
+      try { this.steamworks.runCallbacks(); }
+      catch (error) { console.warn('[Steam] Callback pump:', error.message); }
     }, 16);
   }
 
@@ -179,7 +192,7 @@ class SteamService extends EventEmitter {
 
   async send(payload) {
     const reliableTypes = new Set([
-      'raid-start', 'boss-damage', 'capture-state', 'grid-state', 'raid-clear', 'player-dead'
+      'raid-start', 'boss-damage', 'capture-state', 'grid-state', 'raid-clear', 'player-dead', 'session-start', 'random-start', 'random-floor', 'bgm-sync'
     ]);
     const envelope = Buffer.from(JSON.stringify({ payload, sentAt: Date.now() }), 'utf8');
 
