@@ -1,6 +1,6 @@
 {
   "name": "raid-qix",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Electron + Steam P2P QIX boss raid prototype",
   "main": "src/main.js",
   "scripts": {
@@ -19,20 +19,9 @@
   "build": {
     "appId": "com.raidqix.game",
     "productName": "RAID QIX",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "src/**/*",
-      "package.json",
-      "steam_appid.txt"
-    ],
-    "asarUnpack": [
-      "node_modules/steamworks.js/**/*"
-    ],
-    "win": {
-      "target": "portable",
-      "artifactName": "RAID-QIX-${version}-${arch}.${ext}"
-    }
+    "directories": {"output": "dist"},
+    "files": ["src/**/*","package.json","steam_appid.txt"],
+    "asarUnpack": ["node_modules/steamworks.js/**/*"],
+    "win": {"target": "portable","artifactName": "RAID-QIX-${version}-${arch}.${ext}"}
   }
 }
