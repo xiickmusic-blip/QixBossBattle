@@ -33,3 +33,10 @@ playerHit=function(){
     setTimeout(()=>openScreen('rewardScreen'),1150);
   }
 };
+
+// Load the v0.9.2 combat scheduler/laser patch on GitHub snapshots.
+// The downloadable ZIP references it directly from index.html; this keeps the Git branch in sync.
+const v092Script=document.createElement('script');
+v092Script.src='game-v092.js';
+v092Script.async=false;
+document.body.appendChild(v092Script);
