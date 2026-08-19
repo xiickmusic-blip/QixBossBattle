@@ -1,29 +1,46 @@
-# RAID QIX v1.2.2
+# RAID QIX v1.2.9
 
-## Loadout cleanup
-- Loadout now fits into one fixed screen.
-- GEAR tab combines skill selection, two equipped charm slots, inventory and item detail.
-- FUSION is moved to its own tab.
-- Fusion tab shows the five material slots and a separate compact inventory for drag-and-drop.
-- Inventory remains a dense square-slot grid.
+UI audit / interaction repair release.
 
-## Reward rarity
-Common remains the most frequent drop, but higher rarities are slightly more common than before.
-Base reward roll is approximately:
-- R1 Common: 58%
-- R2 Uncommon: 24%
-- R3 Rare: 12%
-- R4 Epic: 4.9%
-- R5 Legendary: 1.1%
+## Audit findings
+The project had accumulated many version-patch scripts that override the same UI functions and handlers.
 
-Random Raid depth gradually shifts probability away from Common.
+Examples from the v1.2.8 tree:
+- title mode handlers were assigned multiple times
+- START was rebound multiple times
+- reward and fusion actions had multiple handler generations
+- screen visibility was controlled by `.active`, `openScreen()`, inline `!important`, Surface Controller code and later watchdog code at the same time
+- some UI routing still depended on early per-element `.onclick` assignments
 
-## Existing v1.2 systems
-- SoundCloud boss music begins from 0 and loops during encounters.
-- Defeat BGM ducks/muffles before title fade.
-- Retro procedural SE for lasers, AoE detonation, damage, captures, skills and boss kills.
-- Fixed 16:9 display presets and fullscreen.
-- Two explicit charm equipment slots with click-to-unequip, slot selection and drag-to-equip.
-- Procedural 1-5 effect charms and five-item fusion.
+That architecture can produce a visible button whose final event route no longer matches the final screen controller.
+
+## Fix: single UI Kernel
+v1.2.9 adds one final delegated UI controller loaded last.
+
+It owns:
+- Title -> Boss / Random mode
+- Boss selection
+- Start
+- Loadout
+- Settings
+- Back navigation
+- Steam room/create/join/invite/copy
+- SoundCloud ADD
+- Loadout Gear/Fusion tabs
+- Fusion button
+- Reward open/continue
+- Screen visibility
+
+Recognized controls are intercepted in capture phase, so old stacked `.onclick` handlers cannot double-run or override the final behavior.
+
+## Screen routing
+The UI Kernel directly controls display / visibility / pointer-events for each menu surface.
+Obsolete mutation-observer UI repair is disabled.
+
+## Performance
+v1.2.8 cache and menu-render optimizations are retained.
+
+## Verification
+All JavaScript files pass `node --check`.
 
 Use `start.bat` to run and `build.bat` to build.
