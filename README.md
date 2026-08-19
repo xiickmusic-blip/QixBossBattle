@@ -1,18 +1,29 @@
-# RAID QIX v0.7.0
+# RAID QIX v0.8.0
 
-Electron + Steam P2P QIX boss raid prototype.
+## Attack library expansion
+Added a reusable attack library for normal bosses and Random Raid.
 
-## v0.7.0
-- Added triangular territory-breaker projectiles.
-- Triangle bullets explode when they hit captured territory and erase a circular chunk back into danger space.
-- GRAVITY MAW now demonstrates triangle volleys.
-- Added reusable attack-module registry with radial, aimed, ricochet, triangle breaker, AoE telegraph, spiral, cross, gap-ring, needle, and heavy-orb attacks.
-- Added RANDOM RAID endless mode from the title screen.
-- Each floor procedurally generates a boss name, colors, attack-module combination, attack values, speed, timing, movement traits, and optional gravity/laser traits.
-- Module count and pressure scale upward with floor.
-- Clearing all cores advances to the next floor without ending the run.
-- HP persists between random-raid floors. The run ends on player death.
-- Best random-raid floor is persisted locally.
-- Existing keyboard, click-move, and cursor-follow controls remain available.
+New reusable attack modules include:
+- Predictive aimed shots
+- Predictive line AoE
+- Cone AoE
+- Donut AoE
+- Point-blank circular AoE
+- Chasing / tracking AoE
+- Checkerboard floor telegraphs
+- Cross-line AoEs
+- Sequential sweeping lines
+- Bullet curtains
+- Sine-wave bullet curtains
+- Spiral bullet patterns
+- Safe-lane patterns
+- Shared rotating laser module
+- Triangle territory-breaking projectiles
 
-Use `start.bat` to run and `build.bat` to build.
+The Random Raid attack generator now chooses from this expanded registry and randomizes speed, count, warning time, sizes, spacing, angles, and combinations by floor.
+
+GRAVITY MAW also receives shared rotating laser attacks in addition to its gravity mechanics.
+
+## Quick start
+- `start.bat`
+- `build.bat`
