@@ -4,6 +4,7 @@ const SteamService = require('./steam');
 
 let mainWindow;
 const steam = new SteamService();
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -49,6 +50,7 @@ ipcMain.handle('steam:create-lobby', (_e, options) => steam.createLobby(options)
 ipcMain.handle('steam:join-lobby', (_e, lobbyId) => steam.joinLobby(lobbyId));
 ipcMain.handle('steam:leave-lobby', () => steam.leaveLobby());
 ipcMain.handle('steam:get-members', () => steam.getMembers());
+ipcMain.handle('steam:invite-lobby', () => steam.openInviteDialog());
 ipcMain.handle('steam:send', (_e, payload) => steam.send(payload));
 
 steam.onMessage = payload => {
