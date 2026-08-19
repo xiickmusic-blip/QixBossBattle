@@ -28,11 +28,18 @@ app.whenReady().then(async () => {
   await steam.init();
   createWindow();
 
+  try {
+    require('steamworks.js').electronEnableSteamOverlay();
+  } catch (error) {
+    console.warn('[Steam] Overlay unavailable:', error.message);
+  }
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
+app.on('before-quit', () => steam.dispose());
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
