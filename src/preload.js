@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('raidAPI', {
   joinLobby: lobbyId => ipcRenderer.invoke('steam:join-lobby', lobbyId),
   leaveLobby: () => ipcRenderer.invoke('steam:leave-lobby'),
   getMembers: () => ipcRenderer.invoke('steam:get-members'),
+  inviteLobby: () => ipcRenderer.invoke('steam:invite-lobby'),
   send: payload => ipcRenderer.invoke('steam:send', payload),
   onMessage: callback => ipcRenderer.on('steam:message', (_event, payload) => callback(payload))
 });
